@@ -1,32 +1,58 @@
-import express from 'express';
+import express, { Application, Request, Response } from 'express';
+import { createServer } from 'http';
+import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import aiRoutes from './routes/ai.routes.js';
+import authRoutes from './routes/auth.routes.js';
 
 // 1. Initialize environment variables
 dotenv.config();
 
-const app = express();
+// 2. Create Express app with type
+const app: Application = express();
 
-// 2. Middleware
-app.use(cors());
+// 3. Middleware
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 
-// 3. Mount the AI routes
+// 4. Mount AI routes
 app.use('/api/ai', aiRoutes);
+app.use('/api/auth', authRoutes);
 
-// 4. MongoDB Connection Logic
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/cinemind';
+// 5. MongoDB Connection
+const MONGO_URI: string = process.env.MONGO_URI || 'mongodb://localhost:27017/cinemind';
 
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('🗄️ [NODE]: Connected to MongoDB Database Pipeline!'))
-  .catch((err) => {
-    console.error('❌ MongoDB Connection Error:', err.message);
-    process.exit(1); // Stop the server if DB fails
+  .then(() => console.log('🗄️ [NODE]: Connected to MongoDB!'))
+  .catch((err: Error) => {
+    console.error('❌ MongoDB Error:', err.message);
+    process.exit(1);
   });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ [NODE]: Gateway server live on http://localhost:${PORT}`);
+// 6. Wrap Express in HTTP server
+const httpServer = createServer(app);
+
+// 7. Attach Socket.IO with types
+const io: Server = new Server(httpServer, {
+  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] }
 });
+
+// 8. Socket.IO connection handling
+io.on("connection", (socket: Socket) => {
+  console.log(`🔌 [SOCKET]: Client connected: ${socket.id}`);
+
+  socket.on("disconnect", () => {
+    console.log("🔌 [SOCKET]: Client disconnected");
+  });
+});
+
+// 9. Start unified server
+const PORT: number = parseInt(process.env.PORT || "5000", 10);
+httpServer.listen(PORT, () => {
+  console.log(`🚀 [NODE]: Server live on http://localhost:${PORT}`);
+});
+
+// 10. Export io for controllers
+export { io };

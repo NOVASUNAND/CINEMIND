@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 import axios from 'axios';
+import { socket } from '../services/socket';
+import api from '../services/api';
 import { Upload, ImageIcon, Loader2, Sparkles, Cpu } from 'lucide-react';
 
 const Forge = () => {
@@ -11,6 +14,20 @@ const Forge = () => {
   const [story, setStory] = useState<string>(""); 
   const [loading, setLoading] = useState<boolean>(false);
   const [executionMode, setExecutionMode] = useState<'CLOUD_PRIMARY' | 'LOCAL_EDGE_FALLBACK' | null>(null);
+
+  useEffect((): void | (() => void)  => {
+    socket.on("narrative-complete", (data) => {
+      setNormalCaption(data.normalCaption);
+      setAdvancedCaption(data.advancedCaption);
+      setStory(data.story);
+      setExecutionMode(data.executionMode);
+      setLoading(false); // Drop loading instantly when event arrives
+    });
+
+    return () => {
+      socket.off("narrative-complete"); // cleanup to avoid memory leaks
+    };
+  }, []);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -24,6 +41,7 @@ const Forge = () => {
     }
   };
 
+  
   const generateNarrative = async () => {
     if (!file) return;
     
@@ -49,7 +67,7 @@ const Forge = () => {
       formData.append('image', file); // Raw file for local fallback
       formData.append('imageUrl', imageUrl); // Cloud link for MongoDB storage
 
-      const response = await axios.post('http://localhost:5000/api/ai/generate', formData, {
+      const response = await api.post('/ai/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 60000 
       });
