@@ -6,15 +6,15 @@ const HistoryGallery = () => {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [expandedStory, setExpandedStory] = useState<string | null>(null);
 
-  // 🚀 Real-time Filtering State Variables
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedMode, setSelectedMode] = useState<string>('ALL');
 
   const fetchHistory = async () => {
     try {
       setErrorMessage(null);
-      const response =  await api.get('/ai/history');
+      const response = await api.get('/ai/history');
       
       if (Array.isArray(response.data)) {
         setHistory(response.data);
@@ -33,27 +33,22 @@ const HistoryGallery = () => {
     fetchHistory();
   }, []);
 
-  
-const filteredHistory = history.filter((item) => {
-  // 1. Text Search Matching
-  const matchesSearch = 
-    item.narrative?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.normalCaption?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.advancedCaption?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.filename?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredHistory = history.filter((item) => {
+    const matchesSearch = 
+      item.narrative?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.normalCaption?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.advancedCaption?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.filename?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  // 2. Safely normalize executionMode string to handle database legacy records
-  const modeString = (item.executionMode || '').toUpperCase();
+    const modeString = (item.executionMode || '').toUpperCase();
 
-  const matchesMode = 
-    selectedMode === 'ALL' || 
-    
-    (selectedMode === 'CLOUD' && (modeString.includes('CLOUD') || modeString === '' || !modeString.includes('LOCAL'))) ||
-    
-    (selectedMode === 'LOCAL' && modeString.includes('LOCAL'));
+    const matchesMode = 
+      selectedMode === 'ALL' || 
+      (selectedMode === 'CLOUD' && (modeString.includes('CLOUD') || modeString === '' || !modeString.includes('LOCAL'))) ||
+      (selectedMode === 'LOCAL' && modeString.includes('LOCAL'));
 
-  return matchesSearch && matchesMode;
-});
+    return matchesSearch && matchesMode;
+  });
 
   if (loading) {
     return (
@@ -67,8 +62,8 @@ const filteredHistory = history.filter((item) => {
     <section className="mt-8 px-4 pb-20">
       <div className="max-w-6xl mx-auto">
         
-        {/* 🚀 CONTROL PANEL: Search Bar & Dropdown Filtering Layout */}
-        <div className="mb-12 flex flex-col md:flex-row gap-4 bg-zinc-900/40 p-4 border border-white/5 rounded-2xl backdrop-blur-md">
+        {/* 🚀 CONTROL PANEL */}
+        <div className="mb-12 flex flex-col md:flex-row md:items-center gap-4 bg-zinc-900/40 p-4 border border-white/5 rounded-2xl backdrop-blur-md">
           <div className="flex-1 relative">
             <input 
               type="text"
@@ -98,7 +93,6 @@ const filteredHistory = history.filter((item) => {
           </div>
         )}
 
-        {/* Dynamic counter displaying active query states */}
         <div className="mb-6 flex justify-between items-center px-2">
           <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
             Showing {filteredHistory.length} of {history.length} indexed records
@@ -116,7 +110,6 @@ const filteredHistory = history.filter((item) => {
                 key={item._id} 
                 className="group relative bg-zinc-900/50 border border-white/10 rounded-2xl backdrop-blur-xl hover:bg-zinc-800/50 transition-all duration-300 overflow-hidden shadow-xl"
               >
-                {/* Persistent Image Layer */}
                 <div className="h-48 w-full bg-zinc-800 overflow-hidden">
                   {item.imageUrl ? (
                     <img 
@@ -131,7 +124,7 @@ const filteredHistory = history.filter((item) => {
                   )}
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 flex flex-col h-full">
                   <div className="flex justify-between items-start mb-4">
                     <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
                       {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent'}
@@ -145,9 +138,27 @@ const filteredHistory = history.filter((item) => {
                     </span>
                   </div>
 
-                  <p className="text-zinc-200 leading-relaxed font-medium italic font-serif mb-4">
-                    "{item.narrative}"
-                  </p>
+                  {/* Story + Button neatly aligned */}
+                  <div className="mb-4 flex flex-col gap-2">
+                    <p className="text-zinc-200 leading-relaxed font-medium italic font-serif">
+                      "
+                      {expandedStory === item._id || item.narrative?.length <= 150
+                        ? item.narrative
+                        : `${item.narrative.slice(0, 150)}...`}
+                      "
+                    </p>
+
+                    {item.narrative?.length > 150 && (
+                      <button
+                        onClick={() =>
+                          setExpandedStory(expandedStory === item._id ? null : item._id)
+                        }
+                        className="self-start text-blue-400 hover:text-blue-300 text-xs font-mono uppercase tracking-wider"
+                      >
+                        {expandedStory === item._id ? '▲ Show Less' : '▼ Read More'}
+                      </button>
+                    )}
+                  </div>
                   
                   <div className="mt-6 pt-4 border-t border-white/5 space-y-2">
                     <p className="text-[11px] text-zinc-500 line-clamp-1 italic">

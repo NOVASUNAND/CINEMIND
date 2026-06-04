@@ -27,7 +27,24 @@ const Forge = () => {
     return () => {
       socket.off("narrative-complete"); // cleanup to avoid memory leaks
     };
+
+    
   }, []);
+
+  // Restore Last Forge Result
+useEffect(() => {
+  const saved = localStorage.getItem('lastForgeResult');
+
+  if (saved) {
+    const data = JSON.parse(saved);
+
+    setPreview(data.preview);
+    setNormalCaption(data.normalCaption);
+    setAdvancedCaption(data.advancedCaption);
+    setStory(data.story);
+    setExecutionMode(data.executionMode);
+  }
+}, []);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -76,6 +93,17 @@ const Forge = () => {
       setAdvancedCaption(response.data.advancedCaption);
       setStory(response.data.story); 
       setExecutionMode(response.data.executionMode); // Capture 'CLOUD_PRIMARY' or 'LOCAL_EDGE_FALLBACK'
+
+      localStorage.setItem(  
+       'lastForgeResult',
+        JSON.stringify({
+         preview: imageUrl,
+           normalCaption: response.data.normalCaption,
+           advancedCaption: response.data.advancedCaption,
+           story: response.data.story,
+           executionMode: response.data.executionMode
+         })
+       );
 
     } catch (error: any) {
       console.error("Pipeline Error:", error);
