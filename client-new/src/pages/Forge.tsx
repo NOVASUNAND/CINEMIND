@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 import axios from 'axios';
 import { socket } from '../services/socket';
@@ -14,37 +13,45 @@ const Forge = () => {
   const [story, setStory] = useState<string>(""); 
   const [loading, setLoading] = useState<boolean>(false);
   const [executionMode, setExecutionMode] = useState<'CLOUD_PRIMARY' | 'LOCAL_EDGE_FALLBACK' | null>(null);
+  
+  // 🚀 NEW: State for Narrative Tone
+  const [selectedTone, setSelectedTone] = useState<string>('Cinematic 🎬');
 
-  useEffect((): void | (() => void)  => {
+  // 🚀 Tone Configuration Array
+  const tones = [
+    { name: 'Horror 😈', value: 'dark, atmospheric, and terrifying horror' },
+    { name: 'Fantasy 🏰', value: 'mythical, majestic, and high-fantasy storytelling' },
+    { name: 'Sci-Fi 🚀', value: 'futuristic, techno-speculative, and science-fiction' },
+    { name: 'Romantic ❤️', value: 'emotionally resonant, intimate, and deeply romantic' },
+    { name: 'Documentary 🎥', value: 'grounded, historical, and factual observation style' },
+    { name: 'Cinematic 🎬', value: 'epic, widescreen cinematic screenwriting' }
+  ];
+
+  useEffect((): void | (() => void) => {
     socket.on("narrative-complete", (data) => {
       setNormalCaption(data.normalCaption);
       setAdvancedCaption(data.advancedCaption);
       setStory(data.story);
       setExecutionMode(data.executionMode);
-      setLoading(false); // Drop loading instantly when event arrives
+      setLoading(false);
     });
 
     return () => {
-      socket.off("narrative-complete"); // cleanup to avoid memory leaks
+      socket.off("narrative-complete");
     };
-
-    
   }, []);
 
-  // Restore Last Forge Result
-useEffect(() => {
-  const saved = localStorage.getItem('lastForgeResult');
-
-  if (saved) {
-    const data = JSON.parse(saved);
-
-    setPreview(data.preview);
-    setNormalCaption(data.normalCaption);
-    setAdvancedCaption(data.advancedCaption);
-    setStory(data.story);
-    setExecutionMode(data.executionMode);
-  }
-}, []);
+  useEffect(() => {
+    const saved = localStorage.getItem('lastForgeResult');
+    if (saved) {
+      const data = JSON.parse(saved);
+      setPreview(data.preview);
+      setNormalCaption(data.normalCaption);
+      setAdvancedCaption(data.advancedCaption);
+      setStory(data.story);
+      setExecutionMode(data.executionMode);
+    }
+  }, []);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -54,16 +61,15 @@ useEffect(() => {
       setNormalCaption(""); 
       setAdvancedCaption("");
       setStory("");
-      setExecutionMode(null); // Clear mode status on new upload
+      setExecutionMode(null);
     }
   };
 
-  
   const generateNarrative = async () => {
     if (!file) return;
     
     setLoading(true);
-    setExecutionMode(null); // Clear previous status
+    setExecutionMode(null);
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -79,10 +85,13 @@ useEffect(() => {
       );
       const imageUrl = cloudRes.data.secure_url;
 
-      // 🚀 STAGE 2: BACKEND AI PROCESSING (Resilient Hybrid Path)
+      // 🚀 STAGE 2: BACKEND AI PROCESSING
       const formData = new FormData();
-      formData.append('image', file); // Raw file for local fallback
-      formData.append('imageUrl', imageUrl); // Cloud link for MongoDB storage
+      formData.append('image', file);
+      formData.append('imageUrl', imageUrl);
+      
+      // ✅ NEW: Passing selectedTone to the backend
+      formData.append('tone', selectedTone);
 
       const response = await api.post('/ai/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -92,18 +101,18 @@ useEffect(() => {
       setNormalCaption(response.data.normalCaption);
       setAdvancedCaption(response.data.advancedCaption);
       setStory(response.data.story); 
-      setExecutionMode(response.data.executionMode); // Capture 'CLOUD_PRIMARY' or 'LOCAL_EDGE_FALLBACK'
+      setExecutionMode(response.data.executionMode);
 
       localStorage.setItem(  
        'lastForgeResult',
         JSON.stringify({
-         preview: imageUrl,
-           normalCaption: response.data.normalCaption,
-           advancedCaption: response.data.advancedCaption,
-           story: response.data.story,
-           executionMode: response.data.executionMode
-         })
-       );
+          preview: imageUrl,
+          normalCaption: response.data.normalCaption,
+          advancedCaption: response.data.advancedCaption,
+          story: response.data.story,
+          executionMode: response.data.executionMode
+        })
+      );
 
     } catch (error: any) {
       console.error("Pipeline Error:", error);
@@ -114,7 +123,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+    <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl mx-auto">
       {/* Header Inside Page */}
       <div className="text-center mb-10">
         <h2 className="text-3xl font-extrabold italic text-blue-500 mb-2">THE <span className="text-slate-100">FORGE</span></h2>
@@ -139,6 +148,29 @@ useEffect(() => {
         )}
       </div>
 
+      {/* 🚀 NEW: Tone Selector Grid */}
+      <div className="mb-8">
+        <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-4 text-center">
+          Configure Narrative Tone Frequency
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {tones.map((t) => (
+            <button
+              key={t.name}
+              type="button"
+              onClick={() => setSelectedTone(t.value)}
+              className={`px-4 py-3 rounded-xl border text-xs font-mono transition-all duration-200 text-left ${
+                selectedTone === t.value
+                  ? 'bg-blue-600/10 border-blue-500 text-blue-400 font-bold shadow-md shadow-blue-500/5'
+                  : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:bg-slate-900'
+              }`}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Action Button */}
       <button 
         onClick={generateNarrative}
@@ -152,7 +184,7 @@ useEffect(() => {
         )}
       </button>
 
-      {/* Execution Environment Engine Metric Badge */}
+      {/* Execution Environment Metric Badge */}
       {executionMode && (
         <div className="flex items-center justify-center gap-2 mb-8 animate-in fade-in zoom-in-95 duration-300">
           <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">Inference Architecture:</span>
