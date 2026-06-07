@@ -5,10 +5,43 @@ import api from '../services/api';
 import { usePipeline } from '../context/PipelineContext'; 
 import { Upload, ImageIcon, Loader2, Sparkles, Cpu } from 'lucide-react';
 
+// 🚀 THE TYPEWRITER ENGINE: Smooths out chunky token streams into a letter-by-letter flow
+const TypewriterText = ({ text }: { text: string }) => {
+  const [displayedText, setDisplayedText] = useState("");
+
+  useEffect(() => {
+    // Reset the display instantly if a new generation starts
+    if (!text) {
+      setDisplayedText("");
+      return;
+    }
+
+    // If the visual text is behind the actual incoming socket stream, catch up!
+    if (displayedText.length < text.length) {
+      const timer = setTimeout(() => {
+        setDisplayedText(text.slice(0, displayedText.length + 1));
+      }, 15); // ⏱️ SPEED CONTROL: 15ms per letter. Lower is faster, higher is slower!
+      
+      return () => clearTimeout(timer);
+    }
+  }, [text, displayedText]);
+
+  return (
+    <>
+      {displayedText}
+      {/* 🚀 THE BLINKING CURSOR: Only shows up while actively typing */}
+      {displayedText.length < text.length && (
+        <span className="inline-block w-2 h-6 ml-1 bg-purple-500 animate-pulse align-middle"></span>
+      )}
+    </>
+  );
+};
+
 const Forge = () => {
-  // 🚀 FIXED: Consuming file and preview states globally so page switching won't clear your image views
+  // Consuming file, preview, AND the new dynamic streaming states globally
   const {
     loading, setLoading,
+    loadingMessage, setLoadingMessage, 
     normalCaption, setNormalCaption,
     advancedCaption, setAdvancedCaption,
     story, setStory,
@@ -43,8 +76,14 @@ const Forge = () => {
   const generateNarrative = async () => {
     if (!file) return;
     
-    setLoading(true); 
+    // RESET UI FOR STREAMING: Clear previous runs so the new text can type out cleanly
+    setStory(""); 
+    setNormalCaption("");
+    setAdvancedCaption("");
     setExecutionMode(null);
+    setLoadingMessage("Connecting to inference nodes..."); // Initial connection message
+    setLoading(true); 
+
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -64,15 +103,11 @@ const Forge = () => {
       formData.append('imageUrl', imageUrl);
       formData.append('tone', selectedTone);
 
-      const response = await api.post('/ai/generate', formData, {
+      // We just trigger the POST request. The Socket handles all the UI updates and success unlocking now!
+      await api.post('/ai/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 120000 
       });
-      
-      setNormalCaption(response.data.normalCaption);
-      setAdvancedCaption(response.data.advancedCaption);
-      setStory(response.data.story); 
-      setExecutionMode(response.data.executionMode);
 
     } catch (error: any) {
       console.error("Pipeline Error:", error);
@@ -99,7 +134,6 @@ const Forge = () => {
           disabled={loading}
         />
         {preview ? (
-          // 🚀 FIXED: Keeps the visual preview rendered beautifully even after moving tabs
           <img src={preview} alt="Preview" className="max-h-80 rounded-lg object-contain shadow-lg" />
         ) : (
           <div className="text-center">
@@ -133,20 +167,23 @@ const Forge = () => {
         </div>
       </div>
 
-      {/* Action Button Control */}
+      {/* Action Button Control - UX UPGRADED for live streaming feedback */}
       <button 
         onClick={generateNarrative}
         disabled={!file || loading}
-        className={`w-full font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 mb-4 ${
+        className={`w-full font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 mb-4 ${
           loading 
-            ? "bg-slate-800 text-slate-500 cursor-not-allowed opacity-60 animate-pulse" 
+            ? "bg-slate-800 text-cyan-400 cursor-not-allowed opacity-90 shadow-[0_0_20px_rgba(34,211,238,0.2)]" 
             : !file
               ? "bg-slate-800 text-slate-600 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/10"
         }`}
       >
         {loading ? (
-          <> <Loader2 className="animate-spin" /> Background Pipeline Orchestrating... </>
+          <> 
+            <Loader2 className="animate-spin text-cyan-400" size={20} /> 
+            <span className="tracking-wide font-mono text-sm uppercase">{loadingMessage}</span> 
+          </>
         ) : (
           <> <ImageIcon size={20} /> Generate AI Narratives </>
         )}
@@ -165,16 +202,36 @@ const Forge = () => {
       )}
 
       {/* Results Comparison Grid */}
+      {/* Results Comparison Grid - 🚀 UX UPGRADED for triple typewriter streaming */}
       {(normalCaption || advancedCaption) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* Standard Model Card */}
           <div className="p-6 bg-slate-950 rounded-2xl border border-slate-800">
-            <div className="flex items-center gap-2 mb-3"><Cpu size={16} className="text-slate-500" /><h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Standard Model</h3></div>
-            <p className="text-lg text-slate-400 leading-relaxed">{normalCaption}</p>
+            <div className="flex items-center gap-2 mb-3">
+              <Cpu size={16} className="text-slate-500" />
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Standard Model</h3>
+            </div>
+            {/* 🚀 FIXED: Standard caption streams letter-by-letter */}
+            <p className="text-lg text-slate-400 leading-relaxed">
+              {normalCaption ? <TypewriterText text={normalCaption} /> : ""}
+            </p>
           </div>
+
+          {/* Advanced Context Card */}
           <div className="p-6 bg-slate-950 rounded-2xl border-l-4 border-blue-500 border-y border-r border-slate-800">
-            <div className="flex items-center gap-2 mb-3"><Sparkles size={16} className="text-blue-400" /><h3 className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Advanced Context</h3></div>
-            <p className="text-xl italic text-slate-100 leading-relaxed font-serif">"{advancedCaption}"</p>
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles size={16} className="text-blue-400" />
+              <h3 className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Advanced Context</h3>
+            </div>
+            {/* 🚀 FIXED: Advanced analysis streams letter-by-letter inside quotes */}
+            <p className="text-xl italic text-slate-100 leading-relaxed font-serif">
+              "
+              {advancedCaption ? <TypewriterText text={advancedCaption} /> : ""}
+              "
+            </p>
           </div>
+
         </div>
       )}
 
@@ -183,7 +240,14 @@ const Forge = () => {
         <div className="mt-8 p-10 bg-slate-950 rounded-3xl border border-purple-500/30 relative overflow-hidden shadow-[0_0_40px_rgba(168,85,247,0.1)]">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600"></div>
           <div className="flex items-center gap-2 mb-4"><Sparkles className="text-purple-400" size={18} /><h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest">Agentic Narrative</h3></div>
-          <p className="text-2xl italic text-slate-100 leading-relaxed font-serif">"{story}"</p>
+          
+          {/* 🚀 FIXED: The story text will now stream in live with the blinking cursor right here! */}
+          <p className="text-2xl italic text-slate-100 leading-relaxed font-serif relative">
+            "
+            {story ? <TypewriterText text={story} /> : ""}
+            "
+          </p>
+          
         </div>
       )}
     </div>

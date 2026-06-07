@@ -13,21 +13,12 @@ dotenv.config();
 
 const PYTHON_ENGINE_URL = process.env.PYTHON_ENGINE_URL || "http://127.0.0.1:8000";
 
-interface TargetBody {
-  imageUrl?: string;
-  tone?: string;
-}
-
 export const generateNarrative = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // 1. Structural Validation
-    if (!req.file) {
-      return res.status(400).json({ error: "Please upload an image." });
-    }
+    if (!req.file) return res.status(400).json({ error: "Please upload an image." });
+    
     const uploadedFile = req.file;
-
-    // Direct early sanitization of incoming text body payloads
-    const bodyPayload = (req.body || {}) as TargetBody;
+    const bodyPayload = (req.body || {});
     const imageUrl = bodyPayload.imageUrl || "";
     const activeTone = bodyPayload.tone || "epic, widescreen cinematic screenwriting";
     
@@ -36,24 +27,19 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
     let finalNarrative = "";
     let inferenceExecutionMode = "CLOUD_PRIMARY";
 
-    // 🚀 ARCHITECTURAL FIX: Single unified try-block for the ENTIRE Cloud Pipe (Vision + Synthesis)
+    // 🚀 UX STATUS EMIT: Announce pipeline start
+    io.emit("pipeline-status", { message: "Extracting visual data (Stage 1/3)..." });
+
     try {
       console.log("☁️ [NODE]: Triggering Primary Cloud Pipeline (Gemini)...");
 
-      if (!process.env.GEMINI_API_KEY) {
-        throw new Error("Gemini API key missing from environment configurations");
-      }
+      if (!process.env.GEMINI_API_KEY) throw new Error("API key missing from environment configurations");
 
-      const aiStudio = new GoogleGenAI({
-        apiKey: process.env.GEMINI_API_KEY!,
-      });
+      const aiStudio = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
-      // ---- CLOUD STAGE 1: MULTIMODAL VISION VISION ----
       const geminiVisionResponse = await aiStudio.models.generateContent({
         model: "gemini-2.5-flash",
-        config: {
-          responseMimeType: "application/json",
-        },
+        config: { responseMimeType: "application/json" },
         contents: [
           {
             inlineData: {
@@ -63,101 +49,66 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
           },
           `Analyze this image. You must return a JSON object matching this schema exactly:
            {
-             "literal": "Write a clear, objective standard description of the image content here.",
-             "analytical": "Write a deep, contextually advanced narrative analysis here."
+             "literal": "Write a clear, objective standard description.",
+             "analytical": "Write a deep, contextually advanced analysis."
            }`,
         ],
       });
 
-      const visionText = geminiVisionResponse.text || "";
-      if (!visionText) {
-        throw new Error("Vision response returned blank tokens");
-      }
-
-      const cleanJson = JSON.parse(visionText.trim());
+      const cleanJson = JSON.parse(geminiVisionResponse.text?.trim() || "{}");
       normalCaption = cleanJson.literal || "Standard visualization compiled.";
       advancedContext = cleanJson.analytical || "Advanced analysis indexed.";
 
-      // ---- CLOUD STAGE 2: TEXT SYNTHESIS (LANGCHAIN) ----
-      console.log("📝 [NODE]: Cloud Vision succeeded. Synthesizing script via LangChain...");
+      // 🚀 UX STATUS EMIT: Push visual context immediately so screen isn't blank during generation
+      io.emit("context-ready", { normalCaption, advancedCaption: advancedContext });
+      io.emit("pipeline-status", { message: "Synthesizing agentic narrative (Stage 2/3)..." });
       
       const llm = new ChatGoogleGenerativeAI({
         model: "gemini-2.5-flash",
         apiKey: process.env.GEMINI_API_KEY,
-        maxOutputTokens: 1200, // 🚀 FIXED: Doubled the token limit so expansive sentences NEVER hit the ceiling
+        maxOutputTokens: 1200, // Ample token headroom to prevent cutoff at final words
         temperature: 0.7, 
       });
 
       const prompt = PromptTemplate.fromTemplate(`
-        You are an elite, world-class scriptwriter. 
-        
-        CRUCIAL STYLE DEFINITIONS FOR THE TARGET TONE PARAMETER:
-        - "dark, atmospheric, and terrifying horror": Write a tense, suspenseful, and frightening script.
-        - "mythical, majestic, and high-fantasy storytelling": Use grand, magical, epic, and high-fantasy lore prose.
-        - "futuristic, techno-speculative, and science-fiction": Focus on advanced tech, dystopian elements, or cosmic futures.
-        - "emotionally resonant, intimate, and deeply romantic": Focus on intimate feelings, deep affection, and emotional warmth.
-        - "grounded, historical, and factual observation style": Speak like a serious documentary narrator (e.g., David Attenborough). Factual, analytical, objective, and sociological. Do NOT be overly poetic or abstract.
-        - "epic, widescreen cinematic screenwriting": Widescreen dramatic narrative, heavy atmosphere, and theatrical descriptions.
-
-        INPUT DATA:
-        Raw Context Analysis: {context}
-        Target Narrative Tone Parameter: {toneStyle}
+        You are an elite, world-class scriptwriter and cinematic narrator. 
+        Target Tone: {toneStyle}
+        Raw Context: {context}
         
         YOUR TASK:
-        Write an expansive, deeply detailed 3-sentence script based directly on the entities, actions, and environment provided in the Raw Context Analysis. You must alter the linguistic delivery to match the style rules of the Target Narrative Tone Parameter perfectly.
+        Write an expansive, deeply detailed 3-sentence theatrical script based directly on the entities, actions, and landscape provided in the Raw Context. You must alter the linguistic delivery to match the style rules of the Target Tone perfectly.
         
         STRICT PIPELINE LAWS:
         1. Do NOT mention structural media words like "image", "screen", "camera", "frame", "drawing", "artwork", or "character".
-        2. Ground the narrative explicitly in the actual scene elements. 
-        3. CRUCIAL RULE - COMPLETION: You MUST write exactly 3 complete sentences. You MUST finish your final sentence. Do NOT cut off mid-thought. Wrap up your narrative with a definitive period (.).
-        4. Return ONLY the raw plain text of the 3 sentences. No quotes, no markdown wrappers, no introductory headers.
+        2. Ground the narrative explicitly in the actual scene elements.
+        3. CRUCIAL MANDATE - SENTENCE LENGTH & PACING: While each of the 3 sentences must be rich, dramatic, and multi-clause, you must strictly limit each individual sentence to a maximum of 35 words. Pace your vocabulary carefully so that your thoughts are concise yet epic.
+        4. CRUCIAL MANDATE - COMPLETION: You must write EXACTLY 3 complete sentences. The third sentence MUST conclude with absolute narrative finality. Do NOT leave the thought dangling, do NOT exceed your token budget, and ensure the final character is a definitive period (.).
+        5. Return ONLY the raw plain text of the 3 sentences. No quotes, no markdown wrappers, no introductory headers.
       `);
 
       const chain = prompt.pipe(llm);
       
-      const storyResponse = await chain.invoke({ 
+      // 🚀 TOKEN STREAMING ENGINE: Slices cloud responses into live websocket packets
+      const stream = await chain.stream({ 
         context: advancedContext,
         toneStyle: activeTone
       });
 
-      // 🚀 The ultimate fail-proof LangChain string extraction
-      if (storyResponse) {
-        if (typeof storyResponse === "string") {
-          finalNarrative = storyResponse;
-        } else if (typeof storyResponse === "object" && "content" in storyResponse) {
-          const contentVal = storyResponse.content;
-          if (typeof contentVal === "string") {
-            finalNarrative = contentVal;
-          } else if (Array.isArray(contentVal)) {
-            finalNarrative = contentVal
-              .map((chunk: any) => {
-                if (typeof chunk === "string") return chunk;
-                if (chunk.text) return chunk.text;
-                if (chunk.content) return chunk.content;
-                return "";
-              })
-              .join("");
-          } else {
-            finalNarrative = String(contentVal);
-          }
-        } else {
-          finalNarrative = String(storyResponse);
+      for await (const chunk of stream) {
+        const textChunk = chunk.content;
+        if (typeof textChunk === "string" && textChunk) {
+          finalNarrative += textChunk;
+          io.emit("narrative-chunk", { chunk: textChunk });
         }
       }
 
-      // Deep clean trailing artifacts and outer quotes
       finalNarrative = finalNarrative.trim().replace(/^["']+|["']+$/g, "").trim();
 
-      if (!finalNarrative || finalNarrative.length < 10) {
-        throw new Error("Generated narrative sequence collapsed into an empty token string.");
-      }
-
-      console.log("🎬 [NODE] Successfully Synthesized Dynamic Narrative:", finalNarrative);
-
     } catch (cloudError: any) {
-      // 🚀 THE ULTIMATE FALLBACK CATCH: Catches 429 Quota errors, 503 limits, and timeouts completely!
-      console.warn(`⚠️ [NODE]: Primary Cloud Pipeline Failed or Rate-Limited (${cloudError.message}).`);
-      console.log(`⚙️ [NODE]: Activating Moondream2 Local Compute Core on NVIDIA RTX 3050...`);
+      console.warn(`⚠️ [NODE]: Cloud Pipeline Bypassed/Failed (${cloudError.message}). Rerouting execution flow...`);
+      
+      // 🚀 UX STATUS EMIT: Notify client interface that fallback routing is engaging
+      io.emit("pipeline-status", { message: "Cloud congested. Waking Edge Node (RTX 3050)..." });
 
       inferenceExecutionMode = "LOCAL_EDGE_FALLBACK";
 
@@ -168,38 +119,68 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
           contentType: uploadedFile.mimetype,
         });
 
-        // 120-second timeout to handle hardware activation completely
-        const pythonResponse = await axios.post(
-          `${PYTHON_ENGINE_URL}/generate-story`,
-          formData,
-          {
-            headers: { ...formData.getHeaders() },
-            timeout: 120000, 
-          }
-        );
+        const pythonResponse = await axios.post(`${PYTHON_ENGINE_URL}/generate-story`, formData, {
+          headers: { ...formData.getHeaders() },
+          timeout: 120000, 
+        });
 
-        console.log("✅ Local compute nodes responded successfully:", pythonResponse.data);
+        normalCaption = pythonResponse.data.normal || "Local description compiled.";
+        advancedContext = pythonResponse.data.advanced || "Local context compiled.";
+        
+        io.emit("context-ready", { normalCaption, advancedCaption: advancedContext });
+        io.emit("pipeline-status", { message: "Edge Node compiling fallback narrative..." });
 
-        normalCaption = pythonResponse.data.normal || "Local standard caption initialized.";
-        advancedContext = pythonResponse.data.advanced || "Local contextual overview compiled.";
+        // 🚀 STRING REPAIR FIX: Sanitize style text strings cleanly to prevent trailing grammar commas
+        const rawTone = activeTone.split(' ')[0].replace(/,/g, '') || "Cinematic";
+        const toneKeyword = rawTone.charAt(0).toUpperCase() + rawTone.slice(1);
+        const article = /^[AEIOU]/i.test(toneKeyword) ? "an" : "a";
 
-        const toneKeyword = activeTone.split(' ')[0] || "Cinematic";
-        finalNarrative = `Mapped inside a ${toneKeyword} configuration, ${advancedContext.toLowerCase()}. The scene stands preserved vividly by the resilient local execution engine.`;
+        finalNarrative = `[EDGE NODE ACTIVATED]: Generating with ${article} ${toneKeyword} profile. ${advancedContext} This scene stands preserved and indexed locally.`;
+        
+        // Push full fallback array chunk over to animate typewriter
+        io.emit("narrative-chunk", { chunk: finalNarrative });
+
+        // Execute local channel persistence tracking safely within independent block
+        try {
+          await Story.create({
+            user: req.user?.id,
+            imageUrl,
+            filename: uploadedFile.originalname,
+            normalCaption,
+            advancedCaption: advancedContext,
+            narrative: finalNarrative,
+            executionMode: inferenceExecutionMode,
+            createdAt: new Date()
+          });
+          console.log(`💾 [NODE]: Saved to MongoDB History. Mode: ${inferenceExecutionMode}`);
+        } catch (dbErr: any) {
+          console.error("❌ Fallback Database Save Error:", dbErr.message);
+        }
+
+        io.emit("narrative-complete", {
+          normalCaption,
+          advancedCaption: advancedContext,
+          story: finalNarrative,
+          imageUrl,
+          executionMode: inferenceExecutionMode,
+        });
+
+        // 🚀 THE ULTIMATE STRUCTURAL REPAIR: Instantly exit the controller thread upon local completion
+        return res.status(200).json({ success: true, executionMode: "LOCAL_EDGE_FALLBACK" });
 
       } catch (localError: any) {
-        console.error("❌ [NODE]: Complete System Failure. Both Cloud and Local inference channels are offline.");
-        return res.status(500).json({ 
-          error: "All AI pipeline inference targets are currently offline or timing out.",
-          details: localError.message 
-        });
+        console.error("❌ Both inference targets are dead:", localError.message);
+        return res.status(500).json({ error: "All AI pipeline inference targets are currently offline or timing out." });
       }
     }
 
-    // 5. Database Persistence Execution (Executes cleanly for whichever path succeeded)
+    // 🚀 STAGE 3: CLOUD DISPATCH PERSISTENCE (Runs only if Cloud Primary finishes smoothly)
+    io.emit("pipeline-status", { message: "Finalizing persistence logic (Stage 3/3)..." });
+
     try {
       await Story.create({
         user: req.user?.id,
-        imageUrl: imageUrl,
+        imageUrl,
         filename: uploadedFile.originalname,
         normalCaption,
         advancedCaption: advancedContext,
@@ -209,10 +190,9 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
       });
       console.log(`💾 [NODE]: Saved to MongoDB History. Mode: ${inferenceExecutionMode}`);
     } catch (dbError) {
-      console.error("❌ MongoDB Save Error:", dbError);
+      console.error("❌ Primary Database Save Error:", dbError);
     }
 
-    // 6. Push real-time synchronization out over Socket pipe
     io.emit("narrative-complete", {
       normalCaption,
       advancedCaption: advancedContext,
@@ -221,13 +201,7 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
       executionMode: inferenceExecutionMode,
     });
 
-    return res.status(200).json({
-      normalCaption,
-      advancedCaption: advancedContext,
-      story: finalNarrative,
-      imageUrl,
-      executionMode: inferenceExecutionMode,
-    });
+    return res.status(200).json({ success: true, executionMode: "CLOUD_PRIMARY" });
 
   } catch (error: any) {
     console.error("❌ Global Controller Exception:", error.message);
@@ -237,9 +211,7 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
 
 export const getHistory = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const stories = await Story.find({ user: req.user?.id })
-      .sort({ createdAt: -1 })
-      .limit(10);
+    const stories = await Story.find({ user: req.user?.id }).sort({ createdAt: -1 }).limit(10);
     return res.status(200).json(stories);
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
