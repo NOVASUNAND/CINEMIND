@@ -84,7 +84,7 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
       const llm = new ChatGoogleGenerativeAI({
         model: "gemini-2.5-flash",
         apiKey: process.env.GEMINI_API_KEY,
-        maxOutputTokens: 600, 
+        maxOutputTokens: 1200, // 🚀 FIXED: Doubled the token limit so expansive sentences NEVER hit the ceiling
         temperature: 0.7, 
       });
 
@@ -108,10 +108,9 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
         
         STRICT PIPELINE LAWS:
         1. Do NOT mention structural media words like "image", "screen", "camera", "frame", "drawing", "artwork", or "character".
-        2. Ground the narrative explicitly in the actual scene elements (e.g., the boy, the phone, the sunset, the train, the window). 
-        3. CRUCIAL RULE - SENTENCE LENGTH: Each of the 3 sentences must be rich, extensive, and multi-clause. Do not write short, brief statements. Expand each sentence with elaborate environmental observations and analytical context.
-        4. Write EXACTLY 3 complete sentences. You must complete all 3 sentences fully without dropping tokens or cutting off mid-thought.
-        5. Return ONLY the raw plain text of the 3 sentences. No quotes, no markdown wrappers, no introductory headers.
+        2. Ground the narrative explicitly in the actual scene elements. 
+        3. CRUCIAL RULE - COMPLETION: You MUST write exactly 3 complete sentences. You MUST finish your final sentence. Do NOT cut off mid-thought. Wrap up your narrative with a definitive period (.).
+        4. Return ONLY the raw plain text of the 3 sentences. No quotes, no markdown wrappers, no introductory headers.
       `);
 
       const chain = prompt.pipe(llm);
@@ -121,6 +120,7 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
         toneStyle: activeTone
       });
 
+      // 🚀 The ultimate fail-proof LangChain string extraction
       if (storyResponse) {
         if (typeof storyResponse === "string") {
           finalNarrative = storyResponse;
@@ -130,7 +130,12 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
             finalNarrative = contentVal;
           } else if (Array.isArray(contentVal)) {
             finalNarrative = contentVal
-              .map((chunk: any) => typeof chunk === "string" ? chunk : chunk.text || chunk.content || "")
+              .map((chunk: any) => {
+                if (typeof chunk === "string") return chunk;
+                if (chunk.text) return chunk.text;
+                if (chunk.content) return chunk.content;
+                return "";
+              })
               .join("");
           } else {
             finalNarrative = String(contentVal);
@@ -140,11 +145,14 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
         }
       }
 
-      finalNarrative = finalNarrative.replace(/^["'\s]+|["'\s]+$/g, "").trim();
+      // Deep clean trailing artifacts and outer quotes
+      finalNarrative = finalNarrative.trim().replace(/^["']+|["']+$/g, "").trim();
 
       if (!finalNarrative || finalNarrative.length < 10) {
         throw new Error("Generated narrative sequence collapsed into an empty token string.");
       }
+
+      console.log("🎬 [NODE] Successfully Synthesized Dynamic Narrative:", finalNarrative);
 
     } catch (cloudError: any) {
       // 🚀 THE ULTIMATE FALLBACK CATCH: Catches 429 Quota errors, 503 limits, and timeouts completely!
