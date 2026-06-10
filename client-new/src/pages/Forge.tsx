@@ -3,25 +3,18 @@ import type { ChangeEvent } from 'react';
 import axios from 'axios';
 import api from '../services/api';
 import { usePipeline } from '../context/PipelineContext'; 
-import { Upload, ImageIcon, Loader2, Sparkles, Cpu } from 'lucide-react';
+import { Upload, ImageIcon, Loader2, Sparkles, Cpu, Activity, Clock, Zap } from 'lucide-react';
 
-// 🚀 THE TYPEWRITER ENGINE: Smooths out chunky token streams into a letter-by-letter flow
+// THE TYPEWRITER ENGINE
 const TypewriterText = ({ text }: { text: string }) => {
   const [displayedText, setDisplayedText] = useState("");
 
   useEffect(() => {
-    // Reset the display instantly if a new generation starts
-    if (!text) {
-      setDisplayedText("");
-      return;
-    }
-
-    // If the visual text is behind the actual incoming socket stream, catch up!
+    if (!text) { setDisplayedText(""); return; }
     if (displayedText.length < text.length) {
       const timer = setTimeout(() => {
         setDisplayedText(text.slice(0, displayedText.length + 1));
-      }, 15); // ⏱️ SPEED CONTROL: 15ms per letter. Lower is faster, higher is slower!
-      
+      }, 15);
       return () => clearTimeout(timer);
     }
   }, [text, displayedText]);
@@ -29,7 +22,6 @@ const TypewriterText = ({ text }: { text: string }) => {
   return (
     <>
       {displayedText}
-      {/* 🚀 THE BLINKING CURSOR: Only shows up while actively typing */}
       {displayedText.length < text.length && (
         <span className="inline-block w-2 h-6 ml-1 bg-purple-500 animate-pulse align-middle"></span>
       )}
@@ -38,16 +30,17 @@ const TypewriterText = ({ text }: { text: string }) => {
 };
 
 const Forge = () => {
-  // Consuming file, preview, AND the new dynamic streaming states globally
   const {
     loading, setLoading,
-    loadingMessage, setLoadingMessage, 
+    loadingMessage, setLoadingMessage,
     normalCaption, setNormalCaption,
     advancedCaption, setAdvancedCaption,
     story, setStory,
     executionMode, setExecutionMode,
     file, setFile,
-    preview, setPreview
+    preview, setPreview,
+    latencyTime, setLatencyTime,
+    tokenCount, setTokenCount
   } = usePipeline();
   
   const [selectedTone, setSelectedTone] = useState<string>('epic, widescreen cinematic screenwriting');
@@ -70,19 +63,26 @@ const Forge = () => {
       setAdvancedCaption("");
       setStory("");
       setExecutionMode(null);
+      setLatencyTime(0);
+      setTokenCount(0);
     }
   };
 
   const generateNarrative = async () => {
     if (!file) return;
     
-    // RESET UI FOR STREAMING: Clear previous runs so the new text can type out cleanly
+    // Clear UI and Metrics for fresh run
     setStory(""); 
     setNormalCaption("");
     setAdvancedCaption("");
     setExecutionMode(null);
-    setLoadingMessage("Connecting to inference nodes..."); // Initial connection message
+    setTokenCount(0);
+    setLatencyTime(0);
+    setLoadingMessage("Connecting to inference nodes..."); 
     setLoading(true); 
+
+    // Start Telemetry Stopwatch
+    const startTime = performance.now();
 
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -103,17 +103,57 @@ const Forge = () => {
       formData.append('imageUrl', imageUrl);
       formData.append('tone', selectedTone);
 
-      // We just trigger the POST request. The Socket handles all the UI updates and success unlocking now!
       await api.post('/ai/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 120000 
       });
 
+      // Stop Telemetry Stopwatch & Calculate
+      const endTime = performance.now();
+      const executionDurationSeconds = (endTime - startTime) / 1000;
+      setLatencyTime(parseFloat(executionDurationSeconds.toFixed(2)));
+
     } catch (error: any) {
       console.error("Pipeline Error:", error);
-      alert(`Pipeline failed: ${error.response?.data?.error || "Inference execution connection expired."}`);
+      alert(`Pipeline failed: ${error.response?.data?.error || "Inference connection expired."}`);
       setLoading(false); 
     }
+  };
+
+  const handleExportLog = () => {
+    const fileContent = 
+`===================================================================
+                  THE FORGE // VISUAL SYNTHESIS LOG
+===================================================================
+TIMESTAMP: ${new Date().toLocaleString()}
+CONFIGURATION PROFILE: ${selectedTone.toUpperCase()}
+INFERENCE PIPELINE: ${executionMode === 'CLOUD_PRIMARY' ? 'CLOUD ENGINE (GEMINI)' : 'EDGE NODE (RTX 3050)'}
+TOTAL ROUND-TRIP TIME: ${latencyTime} SECONDS
+
+[SCENE SOURCE LITERAL]
+${normalCaption}
+
+[VISUAL SEMANTIC ANALYSIS]
+${advancedCaption}
+
+-------------------------------------------------------------------
+                      SCREENPLAY TRANSCRIPT
+-------------------------------------------------------------------
+EXT. VISIONARY HORIZON - SCENE GENERATION
+
+${story.toUpperCase()}
+
+===================================================================
+          TRANSCRIPT END // ARCHIVAL DATA BLOCK SECURED
+===================================================================`;
+    
+    const element = document.createElement("a");
+    const file = new Blob([fileContent], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `FORGE_LOG_${Date.now()}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
 
   return (
@@ -167,7 +207,7 @@ const Forge = () => {
         </div>
       </div>
 
-      {/* Action Button Control - UX UPGRADED for live streaming feedback */}
+      {/* Action Button */}
       <button 
         onClick={generateNarrative}
         disabled={!file || loading}
@@ -189,49 +229,66 @@ const Forge = () => {
         )}
       </button>
 
-      {/* Execution Environment Metric Badge */}
-      {executionMode && (
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">Inference Architecture:</span>
-          <span className={`px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wide flex items-center gap-1.5 ${
-            executionMode === 'CLOUD_PRIMARY' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-          }`}>
-            {executionMode === 'CLOUD_PRIMARY' ? <><span>☁️</span> Cloud Engine (Gemini)</> : <><span>⚡</span> Resilient Edge Node (RTX 3050)</>}
-          </span>
+      {/* TELEMETRY DASHBOARD HUD */}
+      {(executionMode || loading) && (
+        <div className="grid grid-cols-3 gap-4 mb-8 bg-slate-950 border border-slate-800 p-4 rounded-xl font-mono text-xs text-slate-400">
+          
+          <div className="flex flex-col items-center justify-center border-r border-slate-800 p-2 text-center">
+            <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+              <Activity size={14} />
+              <span className="text-[10px] uppercase tracking-wider font-bold">INF ROUTING</span>
+            </div>
+            {loading && !executionMode ? (
+              <span className="text-cyan-400 animate-pulse text-[11px]">NEGOTIATING...</span>
+            ) : (
+              <span className={`font-bold text-[11px] ${executionMode === 'CLOUD_PRIMARY' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {executionMode === 'CLOUD_PRIMARY' ? "☁️ CLOUD_PIPE" : "⚡ EDGE_NODE"}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col items-center justify-center border-r border-slate-800 p-2 text-center">
+            <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+              <Clock size={14} />
+              <span className="text-[10px] uppercase tracking-wider font-bold">LATENCY RTT</span>
+            </div>
+            {loading && latencyTime === 0 ? (
+              <span className="text-cyan-400 animate-pulse text-[11px]">LIVE CLOCK...</span>
+            ) : (
+              <span className="text-slate-200 font-bold text-[11px]">{latencyTime}s</span>
+            )}
+          </div>
+
+          <div className="flex flex-col items-center justify-center p-2 text-center">
+            <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+              <Zap size={14} />
+              <span className="text-[10px] uppercase tracking-wider font-bold">STREAM VOLUME</span>
+            </div>
+            <span className="text-purple-400 font-bold text-[11px]">
+              {tokenCount} TOKENS
+            </span>
+          </div>
+
         </div>
       )}
 
       {/* Results Comparison Grid */}
-      {/* Results Comparison Grid - 🚀 UX UPGRADED for triple typewriter streaming */}
       {(normalCaption || advancedCaption) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Standard Model Card */}
           <div className="p-6 bg-slate-950 rounded-2xl border border-slate-800">
-            <div className="flex items-center gap-2 mb-3">
-              <Cpu size={16} className="text-slate-500" />
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Standard Model</h3>
-            </div>
-            {/* 🚀 FIXED: Standard caption streams letter-by-letter */}
+            <div className="flex items-center gap-2 mb-3"><Cpu size={16} className="text-slate-500" /><h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Standard Model</h3></div>
             <p className="text-lg text-slate-400 leading-relaxed">
               {normalCaption ? <TypewriterText text={normalCaption} /> : ""}
             </p>
           </div>
-
-          {/* Advanced Context Card */}
           <div className="p-6 bg-slate-950 rounded-2xl border-l-4 border-blue-500 border-y border-r border-slate-800">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles size={16} className="text-blue-400" />
-              <h3 className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Advanced Context</h3>
-            </div>
-            {/* 🚀 FIXED: Advanced analysis streams letter-by-letter inside quotes */}
+            <div className="flex items-center gap-2 mb-3"><Sparkles size={16} className="text-blue-400" /><h3 className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Advanced Context</h3></div>
             <p className="text-xl italic text-slate-100 leading-relaxed font-serif">
               "
               {advancedCaption ? <TypewriterText text={advancedCaption} /> : ""}
               "
             </p>
           </div>
-
         </div>
       )}
 
@@ -239,15 +296,26 @@ const Forge = () => {
       {story && (
         <div className="mt-8 p-10 bg-slate-950 rounded-3xl border border-purple-500/30 relative overflow-hidden shadow-[0_0_40px_rgba(168,85,247,0.1)]">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600"></div>
-          <div className="flex items-center gap-2 mb-4"><Sparkles className="text-purple-400" size={18} /><h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest">Agentic Narrative</h3></div>
           
-          {/* 🚀 FIXED: The story text will now stream in live with the blinking cursor right here! */}
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="text-purple-400" size={18} />
+              <h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest">Agentic Narrative</h3>
+            </div>
+            
+            <button
+              onClick={handleExportLog}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 font-mono text-[10px] uppercase tracking-wider transition-all"
+            >
+              💾 Export Log
+            </button>
+          </div>
+          
           <p className="text-2xl italic text-slate-100 leading-relaxed font-serif relative">
             "
             {story ? <TypewriterText text={story} /> : ""}
             "
           </p>
-          
         </div>
       )}
     </div>

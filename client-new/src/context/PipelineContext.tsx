@@ -4,7 +4,6 @@ import { socket } from '../services/socket';
 interface PipelineContextType {
   loading: boolean;
   setLoading: (loading: boolean) => void;
-  // 🚀 NEW: Tracks the dynamic button message
   loadingMessage: string;
   setLoadingMessage: (msg: string) => void;
   
@@ -13,13 +12,20 @@ interface PipelineContextType {
   advancedCaption: string;
   setAdvancedCaption: (val: string) => void;
   story: string;
-  setStory: (val: string | ((prev: string) => string)) => void; // Updated for appending
+  setStory: (val: string | ((prev: string) => string)) => void; 
   executionMode: 'CLOUD_PRIMARY' | 'LOCAL_EDGE_FALLBACK' | null;
   setExecutionMode: (mode: 'CLOUD_PRIMARY' | 'LOCAL_EDGE_FALLBACK' | null) => void;
+  
   file: File | null;
   setFile: (file: File | null) => void;
   preview: string | null;
   setPreview: (preview: string | null) => void;
+
+  // 🚀 Telemetry Engine Metrics
+  latencyTime: number;
+  setLatencyTime: (time: number) => void;
+  tokenCount: number;
+  setTokenCount: (count: number | ((prev: number) => number)) => void;
 }
 
 const PipelineContext = createContext<PipelineContextType | undefined>(undefined);
@@ -36,28 +42,39 @@ export const PipelineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
+  const [latencyTime, setLatencyTime] = useState<number>(0);
+  const [tokenCount, setTokenCount] = useState<number>(0);
+
+  // 🚀 BULLETPROOF TELEMETRY SYNC: Automatically tracks word/token metrics
+  // whenever the story text changes, completely bypassing socket event race conditions.
   useEffect(() => {
-    // 1. Dynamic Button Text Updater
+    if (!story) {
+      setTokenCount(0);
+      return;
+    }
+    const cleanWords = story.trim().split(/\s+/).filter(Boolean);
+    setTokenCount(cleanWords.length);
+  }, [story]);
+
+  useEffect(() => {
     socket.on("pipeline-status", (data) => {
       setLoadingMessage(data.message);
     });
 
-    // 2. Early Context Loading (Shows context before story finishes!)
     socket.on("context-ready", (data) => {
       setNormalCaption(data.normalCaption);
       setAdvancedCaption(data.advancedCaption);
     });
 
-    // 3. ChatGPT Streaming Typewriter Effect
+    // Cleaned up backpressure trap: Just append the raw string chunk instantly
     socket.on("narrative-chunk", (data) => {
       setStory((prev) => prev + data.chunk);
     });
 
-    // 4. Final Cleanup
     socket.on("narrative-complete", (data) => {
       setExecutionMode(data.executionMode);
       setLoadingMessage("Sequence Complete.");
-      setTimeout(() => setLoading(false), 800); // Tiny delay so user reads "Complete"
+      setTimeout(() => setLoading(false), 800); 
     });
 
     return () => {
@@ -77,7 +94,9 @@ export const PipelineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       story, setStory,
       executionMode, setExecutionMode,
       file, setFile,
-      preview, setPreview
+      preview, setPreview,
+      latencyTime, setLatencyTime,
+      tokenCount, setTokenCount
     }}>
       {children}
     </PipelineContext.Provider>
