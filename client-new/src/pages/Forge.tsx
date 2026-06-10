@@ -121,6 +121,34 @@ const Forge = () => {
   };
 
   const handleExportLog = () => {
+    let formattedScript = "";
+
+    if (executionMode === 'LOCAL_EDGE_FALLBACK') {
+      // 🚀 FRONTEND PARSING FOR EDGE FALLBACK:
+      // Dynamically breaks up the solid paragraph into a spaced screenplay layout
+      const sentences = advancedCaption
+        .replace(/\[EDGE NODE ACTIVATED\]:?/i, '') 
+        .replace(/This scene stands preserved.*/i, '') 
+        .split(/[.!?]+/) 
+        .map(sentence => sentence.trim().toUpperCase())
+        .filter(sentence => sentence.length > 5); 
+
+      formattedScript = [
+        `[EDGE NODE RECONSTRUCTION SYSTEM ACTIVATED]`,
+        `EXT. VISIONARY HORIZON - SCENE GENERATION`,
+        ...sentences.map(s => `${s}.`), // Add periods back to the split beats
+        `THIS DATA BLOCK STANDS SECURED AND INDEXED LOCALLY.`
+      ].join('\n\n'); 
+
+    } else {
+      // Standard cloud streaming format (Preserves your clean Gemini line breaks)
+      formattedScript = story
+        .split('\n')
+        .map(line => line.trim().toUpperCase())
+        .filter(Boolean)
+        .join('\n\n');
+    }
+
     const fileContent = 
 `===================================================================
                   THE FORGE // VISUAL SYNTHESIS LOG
@@ -139,23 +167,21 @@ ${advancedCaption}
 -------------------------------------------------------------------
                       SCREENPLAY TRANSCRIPT
 -------------------------------------------------------------------
-EXT. VISIONARY HORIZON - SCENE GENERATION
-
-${story.toUpperCase()}
+${formattedScript}
 
 ===================================================================
           TRANSCRIPT END // ARCHIVAL DATA BLOCK SECURED
 ===================================================================`;
     
     const element = document.createElement("a");
-    const file = new Blob([fileContent], { type: 'text/plain' });
+    const file = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
     element.href = URL.createObjectURL(file);
     element.download = `FORGE_LOG_${Date.now()}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
   };
-
+  
   return (
     <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl mx-auto">
       {/* Header Inside Page */}
@@ -311,7 +337,7 @@ ${story.toUpperCase()}
             </button>
           </div>
           
-          <p className="text-2xl italic text-slate-100 leading-relaxed font-serif relative">
+          <p className="text-2xl italic text-slate-100 leading-relaxed font-serif relative whitespace-pre-line">
             "
             {story ? <TypewriterText text={story} /> : ""}
             "

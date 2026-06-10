@@ -24,9 +24,9 @@ const AuthPage = () => {
       } else {
         await register(username, email, password);
       }
-      navigate('/forge'); // Redirect instantly to main generation interface upon authentication success
+      navigate('/forge'); 
     } catch (err: any) {
-      setError(err.response?.data?.error || 'An unhandled exception occurred during network handoff.');
+      setError(err.response?.data?.error || 'An error occurred during authentication.');
     } finally {
       setSubmitting(false);
     }
@@ -36,12 +36,13 @@ const AuthPage = () => {
     <div className="min-h-[85vh] flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-zinc-900/40 border border-white/5 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
         
+        {/* Simple & Clear Headers */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold tracking-tight font-sans text-white uppercase">
-            {isLogin ? 'Welcome Back' : 'Create Profile'}
+          <h2 className="text-3xl font-bold tracking-tight font-mono text-white uppercase">
+            {isLogin ? 'Sign In' : 'Sign Up'}
           </h2>
           <p className="text-xs font-mono text-zinc-500 mt-2">
-            {isLogin ? 'ACCESS YOUR PERSISTENT INSTANCE PROFILE' : 'INITIALIZE NEW SYSTEM CORES'}
+            {isLogin ? 'ACCESS YOUR INSTANCE PROFILE' : 'INITIALIZE NEW USER CORE'}
           </p>
         </div>
 
@@ -67,7 +68,7 @@ const AuthPage = () => {
           )}
 
           <div>
-            <label className="block text-[10px] font-mono text-zinc-400 uppercase tracking-widest mb-2">Email Endpoint</label>
+            <label className="block text-[10px] font-mono text-zinc-400 uppercase tracking-widest mb-2">Email Address</label>
             <input
               type="email"
               required
@@ -79,7 +80,7 @@ const AuthPage = () => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-mono text-zinc-400 uppercase tracking-widest mb-2">Password Secret</label>
+            <label className="block text-[10px] font-mono text-zinc-400 uppercase tracking-widest mb-2">Password</label>
             <input
               type="password"
               required
@@ -90,21 +91,23 @@ const AuthPage = () => {
             />
           </div>
 
+          {/* Action Buttons using classic nomenclature */}
           <button
             type="submit"
             disabled={submitting}
             className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 text-white font-mono text-xs uppercase tracking-widest py-4 rounded-xl transition-all font-bold mt-4 shadow-lg shadow-blue-600/10"
           >
-            {submitting ? 'EXECUTING PIPELINE...' : isLogin ? 'AUTHENTICATE SESSION' : 'REGISTER PROTOCOLS'}
+            {submitting ? 'CONNECTING...' : isLogin ? 'Sign In' : 'Sign Up'}
           </button>
         </form>
 
+        {/* Clean Toggles */}
         <div className="mt-8 pt-6 border-t border-white/5 text-center">
           <button
             onClick={() => { setIsLogin(!isLogin); setError(null); }}
             className="text-xs font-mono text-zinc-400 hover:text-blue-400 transition-colors"
           >
-            {isLogin ? "Don't have an instance? Initialize one here →" : "Already registered? Authenticate session here →"}
+            {isLogin ? "Don't have an account? Sign Up here →" : "Already have an account? Sign In here →"}
           </button>
         </div>
 
