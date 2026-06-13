@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+
+import api from '../services/api';
 
 interface AuthContextType {
   user: any;
@@ -27,12 +28,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, [token]);
 
-  // 🚀 Handle Sign-In Authentication Flow
   const login = async (email: string, password: string) => {
-    const res = await axios.post(
-      'http://localhost:5000/api/auth/signin',
-      { email, password }
-    );
+    
+    const res = await api.post('/auth/signin', { email, password });
 
     const { token: receivedToken, user: receivedUser } = res.data;
 
@@ -43,16 +41,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(receivedUser);
   };
 
-  // 🚀 Handle Sign-Up Registration Flow
+ 
   const register = async (
     username: string,
     email: string,
     password: string
   ) => {
-    const res = await axios.post(
-      'http://localhost:5000/api/auth/signup',
-      { username, email, password }
-    );
+   
+    const res = await api.post('/auth/signup', { username, email, password });
 
     const { token: receivedToken, user: receivedUser } = res.data;
 
