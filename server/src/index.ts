@@ -13,8 +13,18 @@ dotenv.config();
 // 2. Create Express app with type
 const app: Application = express();
 
-// 3. Middleware
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+// Whitelist origins allowed to communicate with this backend
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://cinemind-76iw.vercel.app" 
+];
+
+// 3. Middleware Configuration
+app.use(cors({ 
+  origin: allowedOrigins, 
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}));
 app.use(express.json());
 
 // 4. Mount AI routes
@@ -34,9 +44,13 @@ mongoose.connect(MONGO_URI)
 // 6. Wrap Express in HTTP server
 const httpServer = createServer(app);
 
-// 7. Attach Socket.IO with types
+// 7. Attach Socket.IO with dynamic multi-origin configurations
 const io: Server = new Server(httpServer, {
-  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] }
+  cors: { 
+    origin: allowedOrigins, 
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
 
 // 8. Socket.IO connection handling
@@ -51,7 +65,7 @@ io.on("connection", (socket: Socket) => {
 // 9. Start unified server
 const PORT: number = parseInt(process.env.PORT || "5000", 10);
 httpServer.listen(PORT, () => {
-  console.log(`🚀 [NODE]: Server live on http://localhost:${PORT}`);
+  console.log(`🚀 [NODE]: Server live on port ${PORT}`);
 });
 
 // 10. Export io for controllers
