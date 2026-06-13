@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import axios from 'axios';
+//import axios from 'axios';
 
 const HistoryGallery = () => {
   const [history, setHistory] = useState<any[]>([]);
