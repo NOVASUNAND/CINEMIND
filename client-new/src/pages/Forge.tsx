@@ -3,18 +3,26 @@ import type { ChangeEvent } from 'react';
 import axios from 'axios';
 import api from '../services/api';
 import { usePipeline } from '../context/PipelineContext'; 
+import { useAuth } from '../context/AuthContext'; 
 import { Upload, ImageIcon, Loader2, Sparkles, Cpu, Activity, Clock, Zap } from 'lucide-react';
 
-// THE TYPEWRITER ENGINE
+// 🚀 ENHANCED CATCH-UP TYPEWRITER ENGINE
 const TypewriterText = ({ text }: { text: string }) => {
   const [displayedText, setDisplayedText] = useState("");
+
+  // Sync state instantly if component remounts with pre-existing background text
+  useEffect(() => {
+    if (displayedText === "" && text.length > 0) {
+      setDisplayedText(text);
+    }
+  }, [text]);
 
   useEffect(() => {
     if (!text) { setDisplayedText(""); return; }
     if (displayedText.length < text.length) {
       const timer = setTimeout(() => {
         setDisplayedText(text.slice(0, displayedText.length + 1));
-      }, 15);
+      }, 10);
       return () => clearTimeout(timer);
     }
   }, [text, displayedText]);
@@ -42,8 +50,27 @@ const Forge = () => {
     latencyTime, setLatencyTime,
     tokenCount, setTokenCount
   } = usePipeline();
+
+  const { user } = useAuth(); 
   
   const [selectedTone, setSelectedTone] = useState<string>('epic, widescreen cinematic screenwriting');
+
+  // 🚀 FIXED: FAIL-SAFE STATE GUARD
+  // Will ONLY wipe the data context if the user session objects turn null (logout/switch account)
+  useEffect(() => {
+    if (user) return; 
+
+    setNormalCaption("");
+    setAdvancedCaption("");
+    setStory("");
+    setFile(null);
+    setPreview("");
+    setExecutionMode(null);
+    setLatencyTime(0);
+    setTokenCount(0);
+    setLoading(false);
+    setLoadingMessage("");
+  }, [user, setNormalCaption, setAdvancedCaption, setStory, setFile, setPreview, setExecutionMode, setLatencyTime, setTokenCount, setLoading, setLoadingMessage]);
 
   const tones = [
     { name: 'Horror 😈', value: 'dark, atmospheric, and terrifying horror' },
@@ -71,7 +98,6 @@ const Forge = () => {
   const generateNarrative = async () => {
     if (!file) return;
     
-    // Clear UI and Metrics for fresh run
     setStory(""); 
     setNormalCaption("");
     setAdvancedCaption("");
@@ -81,7 +107,6 @@ const Forge = () => {
     setLoadingMessage("Connecting to inference nodes..."); 
     setLoading(true); 
 
-    // Start Telemetry Stopwatch
     const startTime = performance.now();
 
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
@@ -108,13 +133,20 @@ const Forge = () => {
         timeout: 120000 
       });
 
-      // Stop Telemetry Stopwatch & Calculate
       const endTime = performance.now();
       const executionDurationSeconds = (endTime - startTime) / 1000;
       setLatencyTime(parseFloat(executionDurationSeconds.toFixed(2)));
 
     } catch (error: any) {
       console.error("Pipeline Error:", error);
+      
+      if (error.response?.status === 401) {
+        alert("Your session has expired or is invalid. Logging out directly...");
+        localStorage.clear(); 
+        window.location.href = '/auth';
+        return;
+      }
+
       alert(`Pipeline failed: ${error.response?.data?.error || "Inference connection expired."}`);
       setLoading(false); 
     }
@@ -124,8 +156,6 @@ const Forge = () => {
     let formattedScript = "";
 
     if (executionMode === 'LOCAL_EDGE_FALLBACK') {
-      // 🚀 FRONTEND PARSING FOR EDGE FALLBACK:
-      // Dynamically breaks up the solid paragraph into a spaced screenplay layout
       const sentences = advancedCaption
         .replace(/\[EDGE NODE ACTIVATED\]:?/i, '') 
         .replace(/This scene stands preserved.*/i, '') 
@@ -136,12 +166,11 @@ const Forge = () => {
       formattedScript = [
         `[EDGE NODE RECONSTRUCTION SYSTEM ACTIVATED]`,
         `EXT. VISIONARY HORIZON - SCENE GENERATION`,
-        ...sentences.map(s => `${s}.`), // Add periods back to the split beats
+        ...sentences.map(s => `${s}.`), 
         `THIS DATA BLOCK STANDS SECURED AND INDEXED LOCALLY.`
       ].join('\n\n'); 
 
     } else {
-      // Standard cloud streaming format (Preserves your clean Gemini line breaks)
       formattedScript = story
         .split('\n')
         .map(line => line.trim().toUpperCase())
@@ -165,7 +194,7 @@ ${normalCaption}
 ${advancedCaption}
 
 -------------------------------------------------------------------
-                      SCREENPLAY TRANSCRIPT
+                  SCREENPLAY TRANSCRIPT
 -------------------------------------------------------------------
 ${formattedScript}
 
@@ -174,8 +203,8 @@ ${formattedScript}
 ===================================================================`;
     
     const element = document.createElement("a");
-    const file = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
-    element.href = URL.createObjectURL(file);
+    const fileBlob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+    element.href = URL.createObjectURL(fileBlob);
     element.download = `FORGE_LOG_${Date.now()}.txt`;
     document.body.appendChild(element);
     element.click();
@@ -184,23 +213,25 @@ ${formattedScript}
   
   return (
     <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl mx-auto">
-      {/* Header Inside Page */}
+      {/* Page Header Layout */}
       <div className="text-center mb-10">
         <h2 className="text-3xl font-extrabold italic text-blue-500 mb-2">THE <span className="text-slate-100">FORGE</span></h2>
         <p className="text-slate-500 text-xs font-mono tracking-widest uppercase">Visual-Semantic Synthesis Engine</p>
       </div>
 
-      {/* Upload Section Frame */}
+      {/* Accessible Upload Frame Zone */}
       <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-2xl p-10 hover:border-blue-500 transition-colors group cursor-pointer relative mb-8">
         <input 
           type="file" 
+          aria-label="Upload an image to begin reconstruction" 
+          title="Upload an image" 
           className="absolute inset-0 opacity-0 cursor-pointer" 
           onChange={handleFileChange}
           accept="image/*"
           disabled={loading}
         />
         {preview ? (
-          <img src={preview} alt="Preview" className="max-h-80 rounded-lg object-contain shadow-lg" />
+          <img src={preview} alt="Preview Matrix" className="max-h-80 rounded-lg object-contain shadow-lg" />
         ) : (
           <div className="text-center">
             <Upload className="mx-auto w-12 h-12 text-slate-500 group-hover:text-blue-400 mb-4" />
@@ -209,7 +240,7 @@ ${formattedScript}
         )}
       </div>
 
-      {/* Tone Selector Grid */}
+      {/* Tone Selection Hub */}
       <div className="mb-8">
         <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-4 text-center">
           Configure Narrative Tone Frequency
@@ -233,7 +264,7 @@ ${formattedScript}
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Primary Execution Engine Trigger */}
       <button 
         onClick={generateNarrative}
         disabled={!file || loading}
@@ -255,7 +286,7 @@ ${formattedScript}
         )}
       </button>
 
-      {/* TELEMETRY DASHBOARD HUD */}
+      {/* TELEMETRY ANALYTICS INTEGRATION PANEL */}
       {(executionMode || loading) && (
         <div className="grid grid-cols-3 gap-4 mb-8 bg-slate-950 border border-slate-800 p-4 rounded-xl font-mono text-xs text-slate-400">
           
@@ -298,27 +329,25 @@ ${formattedScript}
         </div>
       )}
 
-      {/* Results Comparison Grid */}
+      {/* Visual Analytics Metric Blocks */}
       {(normalCaption || advancedCaption) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="p-6 bg-slate-950 rounded-2xl border border-slate-800">
             <div className="flex items-center gap-2 mb-3"><Cpu size={16} className="text-slate-500" /><h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Standard Model</h3></div>
-            <p className="text-lg text-slate-400 leading-relaxed">
+            <div className="text-lg text-slate-400 leading-relaxed">
               {normalCaption ? <TypewriterText text={normalCaption} /> : ""}
-            </p>
+            </div>
           </div>
           <div className="p-6 bg-slate-950 rounded-2xl border-l-4 border-blue-500 border-y border-r border-slate-800">
             <div className="flex items-center gap-2 mb-3"><Sparkles size={16} className="text-blue-400" /><h3 className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Advanced Context</h3></div>
-            <p className="text-xl italic text-slate-100 leading-relaxed font-serif">
-              "
-              {advancedCaption ? <TypewriterText text={advancedCaption} /> : ""}
-              "
-            </p>
+            <div className="text-xl italic text-slate-100 leading-relaxed font-serif">
+              " {advancedCaption ? <TypewriterText text={advancedCaption} /> : ""} "
+            </div>
           </div>
         </div>
       )}
 
-      {/* Agentic Narrative Output */}
+      {/* Continuous Stream Output Interface Terminal */}
       {story && (
         <div className="mt-8 p-10 bg-slate-950 rounded-3xl border border-purple-500/30 relative overflow-hidden shadow-[0_0_40px_rgba(168,85,247,0.1)]">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600"></div>
@@ -337,11 +366,9 @@ ${formattedScript}
             </button>
           </div>
           
-          <p className="text-2xl italic text-slate-100 leading-relaxed font-serif relative whitespace-pre-line">
-            "
-            {story ? <TypewriterText text={story} /> : ""}
-            "
-          </p>
+          <div className="text-2xl italic text-slate-100 leading-relaxed font-serif relative whitespace-pre-line">
+            " {story ? <TypewriterText text={story} /> : ""} "
+          </div>
         </div>
       )}
     </div>

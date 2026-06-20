@@ -35,6 +35,7 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
 
       if (!process.env.GEMINI_API_KEY) throw new Error("API key missing from environment configurations");
 
+      // STAGE 1: Vision Extraction
       const aiStudio = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
       const geminiVisionResponse = await aiStudio.models.generateContent({
@@ -59,17 +60,27 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
       normalCaption = cleanJson.literal || "Standard visualization compiled.";
       advancedContext = cleanJson.analytical || "Advanced analysis indexed.";
 
-      // 🚀 UX STATUS EMIT: Push visual context immediately so screen isn't blank during generation
+      // 🚀 UX STATUS EMIT: Push visual context immediately so screen isn't blank
       io.emit("context-ready", { normalCaption, advancedCaption: advancedContext });
       io.emit("pipeline-status", { message: "Synthesizing agentic narrative (Stage 2/3)..." });
       
+      // STAGE 2: Narrative Generation
       const llm = new ChatGoogleGenerativeAI({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro", // Heavy-duty reasoning engine
         apiKey: process.env.GEMINI_API_KEY,
-        maxOutputTokens: 1200, // Ample token headroom to prevent cutoff at final words
+        maxOutputTokens: 1200, 
         temperature: 0.7, 
+        
+        safetySettings: [
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_HOSTS", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_EVENTS", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_MEMES", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_VIOLENCE", threshold: "BLOCK_NONE" },
+        ] as any
       });
 
+      // 🚀 THE ULTIMATE MULTI-TONE PROMPT ARCHITECTURE
       const prompt = PromptTemplate.fromTemplate(`
         You are an elite, world-class scriptwriter and cinematic narrator. 
         Target Tone: {toneStyle}
@@ -79,35 +90,51 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
         Write an expansive, deeply detailed 3-sentence theatrical script based directly on the entities, actions, and landscape provided in the Raw Context. You must alter the linguistic delivery to match the style rules of the Target Tone perfectly.
         
         STRICT PIPELINE LAWS:
-        1. Do NOT mention structural media words like "image", "screen", "camera", "frame", "drawing", "artwork", or "character".
-        2. Ground the narrative explicitly in the actual scene elements.
-        3. CRUCIAL MANDATE - SENTENCE LENGTH & PACING: While each of the 3 sentences must be rich, dramatic, and multi-clause, you must strictly limit each individual sentence to a maximum of 35 words. Pace your vocabulary carefully so that your thoughts are concise yet epic.
-        4. CRUCIAL MANDATE - COMPLETION: You must write EXACTLY 3 complete sentences. The third sentence MUST conclude with absolute narrative finality. Do NOT leave the thought dangling, do NOT exceed your token budget, and ensure the final character is a definitive period (.).
-        5. Return ONLY the raw plain text of the 3 sentences. No quotes, no markdown wrappers, no introductory headers.
+        1. TONE-SPECIFIC OVERRIDES (CRITICAL):
+           - If "Documentary": Act like a clinical military historian or nature narrator. Completely ignore any dramatic/fantasy hype words in the Raw Context. Focus strictly on tactical observation and factual scale. Ban all fantasy adjectives.
+           - If "Horror": Focus on atmospheric tension, dread, and shadows. DO NOT use explicit gore words (e.g., charnel, slaughter, blood) to prevent system censorship.
+           - If "Romance", "Sci-Fi", "Fantasy", or "Cinematic": Lean entirely into the atmospheric, emotional, and thematic aesthetics unique to those genres.
+        2. Do NOT mention structural media words like "image", "screen", "camera", "frame", "drawing", "artwork", or "character".
+        3. Ground the narrative explicitly in the actual scene elements.
+        4. PACING & STRUCTURE: Write EXACTLY 3 sentences. Make them rich, dramatic, and multi-clause, but keep them reasonably concise. Avoid massive run-on paragraphs. 
+        5. NARRATIVE FINALITY: The third sentence MUST conclude the thought completely and end with a definitive period (.). Do not leave the final thought dangling.
+        6. Return ONLY the raw plain text of the 3 sentences. No quotes, no markdown wrappers, no introductory headers.
       `);
 
       const chain = prompt.pipe(llm);
       
-      // 🚀 TOKEN STREAMING ENGINE: Slices cloud responses into live websocket packets
       const stream = await chain.stream({ 
         context: advancedContext,
         toneStyle: activeTone
       });
+
+      // Stream chunks over WebSockets
+      // 🚀 BACKPRESSURE FIX: Micro-delay helper to prevent WebSocket chunk congestion
+      const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
       for await (const chunk of stream) {
         const textChunk = chunk.content;
         if (typeof textChunk === "string" && textChunk) {
           finalNarrative += textChunk;
           io.emit("narrative-chunk", { chunk: textChunk });
+          
+          // 🚀 THE TRIPWIRE CURE: Give the event loop 5ms to clear the WebSocket buffer queue 
+          // before snapping up the next incoming packet from the Gemini stream.
+          await delay(5);
         }
       }
 
       finalNarrative = finalNarrative.trim().replace(/^["']+|["']+$/g, "").trim();
 
+      // 🚀 THE MANUAL TRIPWIRE (CIRCUIT BREAKER)
+      // If the stream was severed mid-sentence, throw error to force edge fallback
+      if (!finalNarrative || !finalNarrative.match(/[.!?]$/)) {
+        throw new Error("Cloud stream was decapitated by API safety filters. Forcing edge node routing.");
+      }
+
     } catch (cloudError: any) {
       console.warn(`⚠️ [NODE]: Cloud Pipeline Bypassed/Failed (${cloudError.message}). Rerouting execution flow...`);
       
-      // 🚀 UX STATUS EMIT: Notify client interface that fallback routing is engaging
       io.emit("pipeline-status", { message: "Cloud congested. Waking Edge Node (RTX 3050)..." });
 
       inferenceExecutionMode = "LOCAL_EDGE_FALLBACK";
@@ -130,17 +157,14 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
         io.emit("context-ready", { normalCaption, advancedCaption: advancedContext });
         io.emit("pipeline-status", { message: "Edge Node compiling fallback narrative..." });
 
-        // 🚀 STRING REPAIR FIX: Sanitize style text strings cleanly to prevent trailing grammar commas
         const rawTone = activeTone.split(' ')[0].replace(/,/g, '') || "Cinematic";
         const toneKeyword = rawTone.charAt(0).toUpperCase() + rawTone.slice(1);
         const article = /^[AEIOU]/i.test(toneKeyword) ? "an" : "a";
 
         finalNarrative = `[EDGE NODE ACTIVATED]: Generating with ${article} ${toneKeyword} profile. ${advancedContext} This scene stands preserved and indexed locally.`;
         
-        // Push full fallback array chunk over to animate typewriter
         io.emit("narrative-chunk", { chunk: finalNarrative });
 
-        // Execute local channel persistence tracking safely within independent block
         try {
           await Story.create({
             user: req.user?.id,
@@ -165,7 +189,6 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
           executionMode: inferenceExecutionMode,
         });
 
-        // 🚀 THE ULTIMATE STRUCTURAL REPAIR: Instantly exit the controller thread upon local completion
         return res.status(200).json({ success: true, executionMode: "LOCAL_EDGE_FALLBACK" });
 
       } catch (localError: any) {
@@ -174,7 +197,7 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
       }
     }
 
-    // 🚀 STAGE 3: CLOUD DISPATCH PERSISTENCE (Runs only if Cloud Primary finishes smoothly)
+    // STAGE 3: Cloud Persistence
     io.emit("pipeline-status", { message: "Finalizing persistence logic (Stage 3/3)..." });
 
     try {

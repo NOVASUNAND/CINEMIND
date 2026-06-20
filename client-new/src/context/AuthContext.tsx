@@ -59,15 +59,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(receivedUser);
   };
 
-  // 🚀 Handle Session Logout Clear
+  
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('lastForgeResult');
+  // 1. Wipe core auth data
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  
+  // 2. Wipe the AI workflow states from LocalStorage
+  localStorage.removeItem('lastForgeResult');
+  localStorage.removeItem('lastUploadedImage'); 
+  localStorage.removeItem('currentNarrative');
 
-    setToken(null);
-    setUser(null);
-  };
+  setToken(null);
+  setUser(null);
+  
+  
+  window.location.href = '/login'; 
+};
 
   return (
     <AuthContext.Provider
