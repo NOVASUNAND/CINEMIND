@@ -72,11 +72,12 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
         temperature: 0.7, 
         
         safetySettings: [
-          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_DANGEROUS_HOSTS", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_DANGEROUS_EVENTS", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_DANGEROUS_MEMES", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_VIOLENCE", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
+          
+    
         ] as any
       });
 
