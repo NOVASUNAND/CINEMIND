@@ -23,16 +23,15 @@ const allowedOrigins = [
 app.use(cors({ 
   origin: allowedOrigins, 
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  optionsSuccessStatus: 200 // 🚨 FORCE 200 instead of 204 for picky production proxies!
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 
-// 🚨 Intercept all global options preflights explicitly and end them with a 200 OK
-app.options('*', cors({ 
+// 🚨 CHANGE THE '*' TO '/*splat' TO FIX THE EXPRESS 5 CRASH!
+app.options('/*splat', cors({ 
   origin: allowedOrigins, 
-  credentials: true,
-  optionsSuccessStatus: 200 
+  credentials: true 
 }));
+
 app.use(express.json());
 
 // 4. Mount AI routes
@@ -48,6 +47,12 @@ mongoose.connect(MONGO_URI)
     console.error('❌ MongoDB Error:', err.message);
     process.exit(1);
   });
+
+  app.use((err: any, req: Request, res: Response, next: any) => {
+  console.error("🚨 [CRITICAL RUNTIME ERROR]:", err.message);
+  console.error(err.stack);
+  res.status(500).json({ success: false, error: err.message });
+});
 
 // 6. Wrap Express in HTTP server
 const httpServer = createServer(app);
