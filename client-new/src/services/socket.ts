@@ -1,12 +1,12 @@
 import { io, Socket } from "socket.io-client";
 
-// Checks for Vercel's variable, strips /api if present, or falls back to localhost
-const BASE_URL = import.meta.env.VITE_API_URL 
-  ? import.meta.env.VITE_API_URL.replace('/api', '') 
-  : "http://localhost:5000";
+// 🚀 Use the Vite DEV flag to guarantee local traffic stays local!
+const SOCKET_URL = import.meta.env.DEV 
+  ? "http://localhost:5000" 
+  : (import.meta.env.VITE_API_URL || "").replace('/api', '');
 
 // Create a typed socket instance
-export const socket: Socket = io(BASE_URL, {
+export const socket: Socket = io(SOCKET_URL, {
   autoConnect: true,
-  transports: ["websocket"], // force WebSocket transport
+  transports: ["websocket"], // Skipping long-polling for raw speed ⚡
 });

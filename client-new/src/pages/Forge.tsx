@@ -6,11 +6,11 @@ import { usePipeline } from '../context/PipelineContext';
 import { useAuth } from '../context/AuthContext'; 
 import { Upload, ImageIcon, Loader2, Sparkles, Cpu, Activity, Clock, Zap } from 'lucide-react';
 
-// 🚀 ENHANCED CATCH-UP TYPEWRITER ENGINE
+// 🚀 CLEAN CHARACTER INCREMENT STREAM INTERCEPTOR
 const TypewriterText = ({ text }: { text: string }) => {
   const [displayedText, setDisplayedText] = useState("");
 
-  // Sync state instantly if component remounts with pre-existing background text
+  // Keep state in perfect layout alignment on updates
   useEffect(() => {
     if (displayedText === "" && text.length > 0) {
       setDisplayedText(text);
@@ -18,11 +18,17 @@ const TypewriterText = ({ text }: { text: string }) => {
   }, [text]);
 
   useEffect(() => {
-    if (!text) { setDisplayedText(""); return; }
+    if (!text) { 
+      setDisplayedText(""); 
+      return; 
+    }
+    
+    // Catch up to the incoming socket stream letter-by-letter
     if (displayedText.length < text.length) {
       const timer = setTimeout(() => {
         setDisplayedText(text.slice(0, displayedText.length + 1));
-      }, 10);
+      }, 8); // ⚡ 8ms ensures it perfectly chases the 40ms word stream without lagging
+
       return () => clearTimeout(timer);
     }
   }, [text, displayedText]);
@@ -30,9 +36,12 @@ const TypewriterText = ({ text }: { text: string }) => {
   return (
     <>
       {displayedText}
-      {displayedText.length < text.length && (
-        <span className="inline-block w-2 h-6 ml-1 bg-purple-500 animate-pulse align-middle"></span>
-      )}
+      {/* Active Blinking Terminal Cursor */}
+      {displayedText.length < text.length ? (
+        <span className="inline-block w-2 h-5 ml-0.5 bg-purple-500 animate-pulse align-middle"></span>
+      ) : text.length > 0 ? (
+        <span className="inline-block w-2 h-5 ml-0.5 bg-purple-500/30 align-middle"></span>
+      ) : null}
     </>
   );
 };
@@ -55,8 +64,7 @@ const Forge = () => {
   
   const [selectedTone, setSelectedTone] = useState<string>('epic, widescreen cinematic screenwriting');
 
-  // 🚀 FIXED: FAIL-SAFE STATE GUARD
-  // Will ONLY wipe the data context if the user session objects turn null (logout/switch account)
+  // 🚀 FAIL-SAFE STATE GUARD
   useEffect(() => {
     if (user) return; 
 
@@ -128,17 +136,27 @@ const Forge = () => {
       formData.append('imageUrl', imageUrl);
       formData.append('tone', selectedTone);
 
-      await api.post('/ai/generate', formData, {
+      // Hit your backend gateway controller
+      const response = await api.post('/ai/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 120000 
       });
 
+      // 🎯 FIXED: Let the WebSockets handle the real-time captions and token stream!
+      // We just grab the final execution meta details here on resolution.
+      const { mode } = response.data;
+      setExecutionMode(mode || "LOCAL_EDGE_FALLBACK");
+
       const endTime = performance.now();
       const executionDurationSeconds = (endTime - startTime) / 1000;
       setLatencyTime(parseFloat(executionDurationSeconds.toFixed(2)));
+      
+      // Keep loading false on 'narrative-complete' or fallback response resolution
+      setLoading(false); 
 
     } catch (error: any) {
       console.error("Pipeline Error:", error);
+      setLoading(false); 
       
       if (error.response?.status === 401) {
         alert("Your session has expired or is invalid. Logging out directly...");
@@ -148,7 +166,6 @@ const Forge = () => {
       }
 
       alert(`Pipeline failed: ${error.response?.data?.error || "Inference connection expired."}`);
-      setLoading(false); 
     }
   };
 
@@ -184,7 +201,7 @@ const Forge = () => {
 ===================================================================
 TIMESTAMP: ${new Date().toLocaleString()}
 CONFIGURATION PROFILE: ${selectedTone.toUpperCase()}
-INFERENCE PIPELINE: ${executionMode === 'CLOUD_PRIMARY' ? 'CLOUD ENGINE (GEMINI)' : 'EDGE NODE (RTX 3050)'}
+INFERENCE PIPELINE: ${executionMode}
 TOTAL ROUND-TRIP TIME: ${latencyTime} SECONDS
 
 [SCENE SOURCE LITERAL]
@@ -291,18 +308,26 @@ ${formattedScript}
         <div className="grid grid-cols-3 gap-4 mb-8 bg-slate-950 border border-slate-800 p-4 rounded-xl font-mono text-xs text-slate-400">
           
           <div className="flex flex-col items-center justify-center border-r border-slate-800 p-2 text-center">
-            <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-              <Activity size={14} />
-              <span className="text-[10px] uppercase tracking-wider font-bold">INF ROUTING</span>
-            </div>
-            {loading && !executionMode ? (
-              <span className="text-cyan-400 animate-pulse text-[11px]">NEGOTIATING...</span>
-            ) : (
-              <span className={`font-bold text-[11px] ${executionMode === 'CLOUD_PRIMARY' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {executionMode === 'CLOUD_PRIMARY' ? "☁️ CLOUD_PIPE" : "⚡ EDGE_NODE"}
-              </span>
-            )}
-          </div>
+  <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+    <Activity size={14} />
+    <span className="text-[10px] uppercase tracking-wider font-bold">INF ROUTING</span>
+  </div>
+  {loading && !executionMode ? (
+    <span className="text-cyan-400 animate-pulse text-[11px]">NEGOTIATING...</span>
+  ) : (
+    <span 
+      className={`font-bold text-[11px] ${
+        executionMode === 'CLOUD_PRIMARY' ? 'text-emerald-400' : 
+        executionMode === 'CLOUD_FALLBACK_GROQ' ? 'text-cyan-400' : 
+        'text-amber-400'
+      }`}
+    >
+      {executionMode === 'CLOUD_PRIMARY' && "☁️ CLOUD_PIPE"}
+      {executionMode === 'CLOUD_FALLBACK_GROQ' && "⚡ GROQ_LLAMA"}
+      {executionMode === 'LOCAL_EDGE_FALLBACK' && "⚙️ EDGE_NODE"}
+    </span>
+  )}
+</div>
 
           <div className="flex flex-col items-center justify-center border-r border-slate-800 p-2 text-center">
             <div className="flex items-center gap-1.5 text-slate-500 mb-1">
@@ -322,7 +347,7 @@ ${formattedScript}
               <span className="text-[10px] uppercase tracking-wider font-bold">STREAM VOLUME</span>
             </div>
             <span className="text-purple-400 font-bold text-[11px]">
-              {tokenCount} TOKENS
+              {tokenCount || (story ? story.split(" ").length : 0)} TOKENS
             </span>
           </div>
 

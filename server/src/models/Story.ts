@@ -1,6 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 
+
+
+// 1. Updated TypeScript Interface with the missing analytics fields
 export interface IStory extends Document {
   user: mongoose.Types.ObjectId;
   imageUrl: string;
@@ -9,10 +12,15 @@ export interface IStory extends Document {
   advancedCaption: string;
   narrative: string;
   executionMode: string;
+  executionModeHistory: string[];      
+  totalGenerationAttempts: number;    
+  generationLatencyMs: number;        
+  selfCorrected: boolean;             
+  retryCount: number;                 
   createdAt: Date;
 }
 
-// 2. Define the Schema
+// 2. Updated Mongoose Schema
 const StorySchema: Schema = new Schema({
   user: { type: mongoose.Types.ObjectId, ref: "User", required: true },
   imageUrl: { type: String, required: false },
@@ -21,6 +29,11 @@ const StorySchema: Schema = new Schema({
   advancedCaption: { type: String, required: true },
   narrative: { type: String, required: true },
   executionMode: { type: String, default: "CLOUD_PRIMARY" },
+  executionModeHistory: { type: [String], default: [] },       
+  totalGenerationAttempts: { type: Number, default: 1 },       
+  generationLatencyMs: { type: Number, default: 0 },           
+  selfCorrected: { type: Boolean, default: false },            
+  retryCount: { type: Number, default: 0 },                    
   createdAt: { type: Date, default: Date.now }
 });
 

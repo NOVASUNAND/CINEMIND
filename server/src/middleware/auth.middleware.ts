@@ -18,7 +18,7 @@ export const authMiddleware = (
 
     const token = authHeader.split(' ')[1];
 
-    console.log("JWT_SECRET:", process.env.JWT_SECRET);
+   // console.log("JWT_SECRET:", process.env.JWT_SECRET);
     const decoded: any = jwt.verify(
       token,
       process.env.JWT_SECRET!

@@ -13,8 +13,8 @@ interface PipelineContextType {
   setAdvancedCaption: (val: string) => void;
   story: string;
   setStory: (val: string | ((prev: string) => string)) => void; 
-  executionMode: 'CLOUD_PRIMARY' | 'LOCAL_EDGE_FALLBACK' | null;
-  setExecutionMode: (mode: 'CLOUD_PRIMARY' | 'LOCAL_EDGE_FALLBACK' | null) => void;
+  executionMode: null | 'CLOUD_PRIMARY' | 'CLOUD_FALLBACK_GROQ' | 'LOCAL_EDGE_FALLBACK';
+  setExecutionMode: (mode: null | 'CLOUD_PRIMARY' | 'CLOUD_FALLBACK_GROQ' | 'LOCAL_EDGE_FALLBACK') => void;
   
   file: File | null;
   setFile: (file: File | null) => void;
@@ -37,7 +37,7 @@ export const PipelineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [normalCaption, setNormalCaption] = useState<string>("");
   const [advancedCaption, setAdvancedCaption] = useState<string>("");
   const [story, setStory] = useState<string>("");
-  const [executionMode, setExecutionMode] = useState<'CLOUD_PRIMARY' | 'LOCAL_EDGE_FALLBACK' | null>(null);
+  const [executionMode, setExecutionMode] = useState<null | 'CLOUD_PRIMARY' | 'CLOUD_FALLBACK_GROQ' | 'LOCAL_EDGE_FALLBACK'>(null);
   
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);

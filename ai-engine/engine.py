@@ -113,12 +113,30 @@ async def generate_story(file: UploadFile = File(...)):
 
             print(f"🔬 [STAGE 2 - Analytical]: {advanced_caption}")
 
+            # ---------------------------------------------------------
+            # 🎬 STAGE 3: AGENTIC NARRATIVE (Cinematic Creative Story)
+            # ---------------------------------------------------------
+            story_query = (
+                "Based on the elements, characters, and mood of this image, write a deeply dramatic, "
+                "compelling, and mysterious cinematic narrative paragraph. Bring the scene to life with creative storytelling."
+            )
+
+            # 🚀 DEFINING THE VARIABlE TO FIX THE NAME_ERROR!
+            agentic_narrative = model.answer_question(
+                image_embeds,
+                story_query,
+                tokenizer
+            ).strip()
+
+            print(f"🎬 [STAGE 3 - Agentic Story]: {agentic_narrative}")
+
         # ---------------------------------------------------------
-        # RESPONSE
+        # RESPONSE (Matches exactly what your Node.js backend expects)
         # ---------------------------------------------------------
         return {
             "normal": standard_caption,
-            "advanced": advanced_caption
+            "advanced": advanced_caption,
+            "story": agentic_narrative  # 🚀 Sending the valid variable back to Node!
         }
 
     except HTTPException as http_err:
