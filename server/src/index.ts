@@ -35,8 +35,9 @@ app.options('/*splat', cors({
 app.use(express.json());
 
 // 4. Mount AI routes
-app.use('/api/ai', aiRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes);
+
 
 // 5. MongoDB Connection
 const MONGO_URI: string = process.env.MONGO_URI || 'mongodb://localhost:27017/cinemind';
