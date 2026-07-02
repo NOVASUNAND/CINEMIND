@@ -1,0 +1,881 @@
+E:\Gen ai
+├── ai-engine
+|  ├── Dockerfile
+|  ├── engine.py
+|  ├── requirements.txt
+|  ├── test.py
+|  └── venv
+|     ├── Include
+|     ├── Lib
+|     ├── pyvenv.cfg
+|     ├── Scripts
+|     └── share
+├── client-new
+|  ├── eslint.config.js
+|  ├── index.html
+|  ├── node_modules
+|  |  ├── @alloc
+|  |  ├── @babel
+|  |  ├── @emnapi
+|  |  ├── @eslint
+|  |  ├── @eslint-community
+|  |  ├── @humanfs
+|  |  ├── @humanwhocodes
+|  |  ├── @jridgewell
+|  |  ├── @napi-rs
+|  |  ├── @oxc-project
+|  |  ├── @rolldown
+|  |  ├── @socket.io
+|  |  ├── @tailwindcss
+|  |  ├── @tybys
+|  |  ├── @types
+|  |  ├── @typescript-eslint
+|  |  ├── @vitejs
+|  |  ├── acorn
+|  |  ├── acorn-jsx
+|  |  ├── ajv
+|  |  ├── ansi-styles
+|  |  ├── argparse
+|  |  ├── asynckit
+|  |  ├── autoprefixer
+|  |  ├── axios
+|  |  ├── balanced-match
+|  |  ├── baseline-browser-mapping
+|  |  ├── brace-expansion
+|  |  ├── browserslist
+|  |  ├── call-bind-apply-helpers
+|  |  ├── callsites
+|  |  ├── caniuse-lite
+|  |  ├── chalk
+|  |  ├── color-convert
+|  |  ├── color-name
+|  |  ├── combined-stream
+|  |  ├── concat-map
+|  |  ├── convert-source-map
+|  |  ├── cookie
+|  |  ├── cross-spawn
+|  |  ├── csstype
+|  |  ├── debug
+|  |  ├── deep-is
+|  |  ├── delayed-stream
+|  |  ├── detect-libc
+|  |  ├── dunder-proto
+|  |  ├── electron-to-chromium
+|  |  ├── engine.io-client
+|  |  ├── engine.io-parser
+|  |  ├── enhanced-resolve
+|  |  ├── es-define-property
+|  |  ├── es-errors
+|  |  ├── es-object-atoms
+|  |  ├── es-set-tostringtag
+|  |  ├── escalade
+|  |  ├── escape-string-regexp
+|  |  ├── eslint
+|  |  ├── eslint-plugin-react-hooks
+|  |  ├── eslint-plugin-react-refresh
+|  |  ├── eslint-scope
+|  |  ├── eslint-visitor-keys
+|  |  ├── espree
+|  |  ├── esquery
+|  |  ├── esrecurse
+|  |  ├── estraverse
+|  |  ├── esutils
+|  |  ├── fast-deep-equal
+|  |  ├── fast-json-stable-stringify
+|  |  ├── fast-levenshtein
+|  |  ├── fdir
+|  |  ├── file-entry-cache
+|  |  ├── find-up
+|  |  ├── flat-cache
+|  |  ├── flatted
+|  |  ├── follow-redirects
+|  |  ├── form-data
+|  |  ├── fraction.js
+|  |  ├── function-bind
+|  |  ├── gensync
+|  |  ├── get-intrinsic
+|  |  ├── get-proto
+|  |  ├── glob-parent
+|  |  ├── globals
+|  |  ├── gopd
+|  |  ├── graceful-fs
+|  |  ├── has-flag
+|  |  ├── has-symbols
+|  |  ├── has-tostringtag
+|  |  ├── hasown
+|  |  ├── hermes-estree
+|  |  ├── hermes-parser
+|  |  ├── ignore
+|  |  ├── import-fresh
+|  |  ├── imurmurhash
+|  |  ├── is-extglob
+|  |  ├── is-glob
+|  |  ├── isexe
+|  |  ├── jiti
+|  |  ├── js-tokens
+|  |  ├── js-yaml
+|  |  ├── jsesc
+|  |  ├── json-buffer
+|  |  ├── json-schema-traverse
+|  |  ├── json-stable-stringify-without-jsonify
+|  |  ├── json5
+|  |  ├── keyv
+|  |  ├── levn
+|  |  ├── lightningcss
+|  |  ├── lightningcss-win32-x64-msvc
+|  |  ├── locate-path
+|  |  ├── lodash.merge
+|  |  ├── lru-cache
+|  |  ├── lucide-react
+|  |  ├── magic-string
+|  |  ├── math-intrinsics
+|  |  ├── mime-db
+|  |  ├── mime-types
+|  |  ├── minimatch
+|  |  ├── ms
+|  |  ├── nanoid
+|  |  ├── natural-compare
+|  |  ├── node-releases
+|  |  ├── optionator
+|  |  ├── p-limit
+|  |  ├── p-locate
+|  |  ├── parent-module
+|  |  ├── path-exists
+|  |  ├── path-key
+|  |  ├── picocolors
+|  |  ├── picomatch
+|  |  ├── postcss
+|  |  ├── postcss-value-parser
+|  |  ├── prelude-ls
+|  |  ├── proxy-from-env
+|  |  ├── punycode
+|  |  ├── react
+|  |  ├── react-dom
+|  |  ├── react-router
+|  |  ├── react-router-dom
+|  |  ├── resolve-from
+|  |  ├── rolldown
+|  |  ├── scheduler
+|  |  ├── semver
+|  |  ├── set-cookie-parser
+|  |  ├── shebang-command
+|  |  ├── shebang-regex
+|  |  ├── socket.io-client
+|  |  ├── socket.io-parser
+|  |  ├── source-map-js
+|  |  ├── strip-json-comments
+|  |  ├── supports-color
+|  |  ├── tailwindcss
+|  |  ├── tapable
+|  |  ├── tinyglobby
+|  |  ├── ts-api-utils
+|  |  ├── tslib
+|  |  ├── type-check
+|  |  ├── typescript
+|  |  ├── typescript-eslint
+|  |  ├── undici-types
+|  |  ├── update-browserslist-db
+|  |  ├── uri-js
+|  |  ├── vite
+|  |  ├── which
+|  |  ├── word-wrap
+|  |  ├── ws
+|  |  ├── xmlhttprequest-ssl
+|  |  ├── yallist
+|  |  ├── yocto-queue
+|  |  ├── zod
+|  |  └── zod-validation-error
+|  ├── package-lock.json
+|  ├── package.json
+|  ├── postcss.config.js
+|  ├── public
+|  |  ├── favicon.svg
+|  |  └── icons.svg
+|  ├── README.md
+|  ├── src
+|  |  ├── App.css
+|  |  ├── App.tsx
+|  |  ├── assets
+|  |  ├── components
+|  |  ├── context
+|  |  ├── index.css
+|  |  ├── main.tsx
+|  |  ├── pages
+|  |  ├── routes
+|  |  └── services
+|  ├── tailwind.config.js
+|  ├── tsconfig.app.json
+|  ├── tsconfig.json
+|  ├── tsconfig.node.json
+|  ├── vercel.json
+|  └── vite.config.ts
+├── node_modules
+|  ├── @eslint
+|  |  ├── config-array
+|  |  ├── config-helpers
+|  |  ├── core
+|  |  ├── eslintrc
+|  |  ├── js
+|  |  ├── object-schema
+|  |  └── plugin-kit
+|  ├── @eslint-community
+|  |  ├── eslint-utils
+|  |  └── regexpp
+|  ├── @humanfs
+|  |  ├── core
+|  |  ├── node
+|  |  └── types
+|  ├── @humanwhocodes
+|  |  ├── module-importer
+|  |  └── retry
+|  ├── @types
+|  |  ├── estree
+|  |  └── json-schema
+|  ├── acorn
+|  |  ├── bin
+|  |  ├── CHANGELOG.md
+|  |  ├── dist
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── acorn-jsx
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── xhtml.js
+|  ├── ajv
+|  |  ├── dist
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── scripts
+|  ├── ansi-styles
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── argparse
+|  |  ├── argparse.js
+|  |  ├── CHANGELOG.md
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── balanced-match
+|  |  ├── index.js
+|  |  ├── LICENSE.md
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── brace-expansion
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── callsites
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── chalk
+|  |  ├── index.d.ts
+|  |  ├── license
+|  |  ├── package.json
+|  |  ├── readme.md
+|  |  └── source
+|  ├── color-convert
+|  |  ├── CHANGELOG.md
+|  |  ├── conversions.js
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── route.js
+|  ├── color-name
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── concat-map
+|  |  ├── example
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.markdown
+|  |  └── test
+|  ├── cross-spawn
+|  |  ├── index.js
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── debug
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── src
+|  ├── deep-is
+|  |  ├── example
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.markdown
+|  |  └── test
+|  ├── escape-string-regexp
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── eslint
+|  |  ├── bin
+|  |  ├── conf
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── messages
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── eslint-scope
+|  |  ├── dist
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── eslint-visitor-keys
+|  |  ├── dist
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── espree
+|  |  ├── dist
+|  |  ├── espree.js
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── esquery
+|  |  ├── dist
+|  |  ├── license.txt
+|  |  ├── package.json
+|  |  ├── parser.js
+|  |  └── README.md
+|  ├── esrecurse
+|  |  ├── esrecurse.js
+|  |  ├── gulpfile.babel.js
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── estraverse
+|  |  ├── estraverse.js
+|  |  ├── gulpfile.js
+|  |  ├── LICENSE.BSD
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── esutils
+|  |  ├── lib
+|  |  ├── LICENSE.BSD
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── fast-deep-equal
+|  |  ├── es6
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── react.d.ts
+|  |  ├── react.js
+|  |  └── README.md
+|  ├── fast-json-stable-stringify
+|  |  ├── benchmark
+|  |  ├── example
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── test
+|  ├── fast-levenshtein
+|  |  ├── levenshtein.js
+|  |  ├── LICENSE.md
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── file-entry-cache
+|  |  ├── cache.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── find-up
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── flat-cache
+|  |  ├── changelog.md
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── src
+|  ├── flatted
+|  |  ├── cjs
+|  |  ├── es.js
+|  |  ├── esm
+|  |  ├── esm.js
+|  |  ├── golang
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── min.js
+|  |  ├── package.json
+|  |  ├── php
+|  |  ├── python
+|  |  ├── README.md
+|  |  └── types
+|  ├── glob-parent
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── globals
+|  |  ├── globals.json
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── has-flag
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── ignore
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── legacy.js
+|  |  ├── LICENSE-MIT
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── import-fresh
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── imurmurhash
+|  |  ├── imurmurhash.js
+|  |  ├── imurmurhash.min.js
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── is-extglob
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── is-glob
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── isexe
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── mode.js
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  ├── test
+|  |  └── windows.js
+|  ├── js-yaml
+|  |  ├── bin
+|  |  ├── dist
+|  |  ├── index.js
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── json-buffer
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── test
+|  ├── json-schema-traverse
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── spec
+|  ├── json-stable-stringify-without-jsonify
+|  |  ├── example
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── readme.markdown
+|  |  └── test
+|  ├── keyv
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── src
+|  ├── levn
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── locate-path
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── lodash.merge
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── minimatch
+|  |  ├── LICENSE
+|  |  ├── minimatch.js
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── ms
+|  |  ├── index.js
+|  |  ├── license.md
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── natural-compare
+|  |  ├── index.js
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── optionator
+|  |  ├── CHANGELOG.md
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── p-limit
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── p-locate
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── parent-module
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── path-exists
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── path-key
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── prelude-ls
+|  |  ├── CHANGELOG.md
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── punycode
+|  |  ├── LICENSE-MIT.txt
+|  |  ├── package.json
+|  |  ├── punycode.es6.js
+|  |  ├── punycode.js
+|  |  └── README.md
+|  ├── resolve-from
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── shebang-command
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── shebang-regex
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── strip-json-comments
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── supports-color
+|  |  ├── browser.js
+|  |  ├── index.js
+|  |  ├── license
+|  |  ├── package.json
+|  |  └── readme.md
+|  ├── type-check
+|  |  ├── lib
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  ├── uri-js
+|  |  ├── dist
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── yarn.lock
+|  ├── which
+|  |  ├── bin
+|  |  ├── CHANGELOG.md
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  ├── README.md
+|  |  └── which.js
+|  ├── word-wrap
+|  |  ├── index.d.ts
+|  |  ├── index.js
+|  |  ├── LICENSE
+|  |  ├── package.json
+|  |  └── README.md
+|  └── yocto-queue
+|     ├── index.d.ts
+|     ├── index.js
+|     ├── license
+|     ├── package.json
+|     └── readme.md
+├── package-lock.json
+├── package.json
+├── README.md
+└── server
+   ├── node_modules
+   |  ├── @cfworker
+   |  ├── @cspotcode
+   |  ├── @esbuild
+   |  ├── @google
+   |  ├── @jridgewell
+   |  ├── @langchain
+   |  ├── @mongodb-js
+   |  ├── @protobufjs
+   |  ├── @socket.io
+   |  ├── @standard-schema
+   |  ├── @tsconfig
+   |  ├── @types
+   |  ├── accepts
+   |  ├── acorn
+   |  ├── acorn-walk
+   |  ├── agent-base
+   |  ├── anymatch
+   |  ├── append-field
+   |  ├── arg
+   |  ├── asynckit
+   |  ├── axios
+   |  ├── balanced-match
+   |  ├── base64-js
+   |  ├── base64id
+   |  ├── bcryptjs
+   |  ├── bignumber.js
+   |  ├── binary-extensions
+   |  ├── body-parser
+   |  ├── brace-expansion
+   |  ├── braces
+   |  ├── bson
+   |  ├── buffer-equal-constant-time
+   |  ├── buffer-from
+   |  ├── busboy
+   |  ├── bytes
+   |  ├── call-bind-apply-helpers
+   |  ├── call-bound
+   |  ├── chokidar
+   |  ├── combined-stream
+   |  ├── concat-stream
+   |  ├── content-disposition
+   |  ├── content-type
+   |  ├── cookie
+   |  ├── cookie-signature
+   |  ├── cors
+   |  ├── create-require
+   |  ├── data-uri-to-buffer
+   |  ├── debug
+   |  ├── delayed-stream
+   |  ├── depd
+   |  ├── diff
+   |  ├── dotenv
+   |  ├── dunder-proto
+   |  ├── ecdsa-sig-formatter
+   |  ├── ee-first
+   |  ├── encodeurl
+   |  ├── engine.io
+   |  ├── engine.io-parser
+   |  ├── es-define-property
+   |  ├── es-errors
+   |  ├── es-object-atoms
+   |  ├── es-set-tostringtag
+   |  ├── esbuild
+   |  ├── escape-html
+   |  ├── etag
+   |  ├── eventemitter3
+   |  ├── express
+   |  ├── extend
+   |  ├── fetch-blob
+   |  ├── fill-range
+   |  ├── finalhandler
+   |  ├── follow-redirects
+   |  ├── form-data
+   |  ├── formdata-polyfill
+   |  ├── forwarded
+   |  ├── fresh
+   |  ├── function-bind
+   |  ├── gaxios
+   |  ├── gcp-metadata
+   |  ├── get-intrinsic
+   |  ├── get-proto
+   |  ├── get-tsconfig
+   |  ├── glob-parent
+   |  ├── google-auth-library
+   |  ├── google-logging-utils
+   |  ├── gopd
+   |  ├── groq-sdk
+   |  ├── has-flag
+   |  ├── has-symbols
+   |  ├── has-tostringtag
+   |  ├── hasown
+   |  ├── http-errors
+   |  ├── https-proxy-agent
+   |  ├── iconv-lite
+   |  ├── ignore-by-default
+   |  ├── inherits
+   |  ├── ipaddr.js
+   |  ├── is-binary-path
+   |  ├── is-extglob
+   |  ├── is-glob
+   |  ├── is-network-error
+   |  ├── is-number
+   |  ├── is-promise
+   |  ├── js-tiktoken
+   |  ├── json-bigint
+   |  ├── jsonwebtoken
+   |  ├── jwa
+   |  ├── jws
+   |  ├── kareem
+   |  ├── langsmith
+   |  ├── lodash.includes
+   |  ├── lodash.isboolean
+   |  ├── lodash.isinteger
+   |  ├── lodash.isnumber
+   |  ├── lodash.isplainobject
+   |  ├── lodash.isstring
+   |  ├── lodash.once
+   |  ├── long
+   |  ├── make-error
+   |  ├── math-intrinsics
+   |  ├── media-typer
+   |  ├── memory-pager
+   |  ├── merge-descriptors
+   |  ├── mime-db
+   |  ├── mime-types
+   |  ├── minimatch
+   |  ├── mongodb
+   |  ├── mongodb-connection-string-url
+   |  ├── mongoose
+   |  ├── mpath
+   |  ├── mquery
+   |  ├── ms
+   |  ├── multer
+   |  ├── mustache
+   |  ├── negotiator
+   |  ├── node-domexception
+   |  ├── node-fetch
+   |  ├── nodemon
+   |  ├── normalize-path
+   |  ├── object-assign
+   |  ├── object-inspect
+   |  ├── on-finished
+   |  ├── once
+   |  ├── p-finally
+   |  ├── p-queue
+   |  ├── p-retry
+   |  ├── p-timeout
+   |  ├── parseurl
+   |  ├── path-to-regexp
+   |  ├── picomatch
+   |  ├── protobufjs
+   |  ├── proxy-addr
+   |  ├── proxy-from-env
+   |  ├── pstree.remy
+   |  ├── punycode
+   |  ├── qs
+   |  ├── range-parser
+   |  ├── raw-body
+   |  ├── readable-stream
+   |  ├── readdirp
+   |  ├── resolve-pkg-maps
+   |  ├── retry
+   |  ├── router
+   |  ├── safe-buffer
+   |  ├── safer-buffer
+   |  ├── semver
+   |  ├── send
+   |  ├── serve-static
+   |  ├── setprototypeof
+   |  ├── side-channel
+   |  ├── side-channel-list
+   |  ├── side-channel-map
+   |  ├── side-channel-weakmap
+   |  ├── sift
+   |  ├── simple-update-notifier
+   |  ├── socket.io
+   |  ├── socket.io-adapter
+   |  ├── socket.io-parser
+   |  ├── sparse-bitfield
+   |  ├── statuses
+   |  ├── streamsearch
+   |  ├── string_decoder
+   |  ├── supports-color
+   |  ├── to-regex-range
+   |  ├── toidentifier
+   |  ├── touch
+   |  ├── tr46
+   |  ├── ts-node
+   |  ├── tsx
+   |  ├── type-is
+   |  ├── typedarray
+   |  ├── typescript
+   |  ├── undefsafe
+   |  ├── undici
+   |  ├── undici-types
+   |  ├── unpipe
+   |  ├── util-deprecate
+   |  ├── v8-compile-cache-lib
+   |  ├── vary
+   |  ├── web-streams-polyfill
+   |  ├── webidl-conversions
+   |  ├── whatwg-url
+   |  ├── wrappy
+   |  ├── ws
+   |  ├── yn
+   |  └── zod
+   ├── package-lock.json
+   ├── package.json
+   ├── src
+   |  ├── controllers
+   |  ├── index.ts
+   |  ├── interfaces
+   |  ├── middleware
+   |  ├── models
+   |  ├── routes
+   |  └── utils
+   └── tsconfig.json
+
+directory: 544 file: 333
+

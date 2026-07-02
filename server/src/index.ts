@@ -16,7 +16,7 @@ const app: Application = express();
 // Whitelist origins allowed to communicate with this backend
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://cinemind-76iw.vercel.app" 
+  "https://cinemind-ashy.vercel.app" 
 ];
 
 // 3. Middleware Configuration
