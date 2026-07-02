@@ -23,7 +23,15 @@ const allowedOrigins = [
 app.use(cors({ 
   origin: allowedOrigins, 
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  optionsSuccessStatus: 200 // 🚨 FORCE 200 instead of 204 for picky production proxies!
+}));
+
+// 🚨 Intercept all global options preflights explicitly and end them with a 200 OK
+app.options('*', cors({ 
+  origin: allowedOrigins, 
+  credentials: true,
+  optionsSuccessStatus: 200 
 }));
 app.use(express.json());
 
