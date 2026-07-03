@@ -11,27 +11,24 @@ const TypewriterText = ({ text }: { text: string }) => {
   const [displayedText, setDisplayedText] = useState("");
 
   // Keep state in perfect layout alignment on updates
-  useEffect(() => {
-    if (displayedText === "" && text.length > 0) {
-      setDisplayedText(text);
-    }
-  }, [text]);
+ useEffect(() => {
+  // 1. Handle clearing the text when incoming stream is empty
+  if (!text) {
+    const clearTimer = setTimeout(() => {
+      setDisplayedText("");
+    }, 0);
+    return () => clearTimeout(clearTimer);
+  }
+  
+  // 2. Catch up to the incoming socket stream letter-by-letter (Typewriter Effect)
+  if (displayedText.length < text.length) {
+    const timer = setTimeout(() => {
+      setDisplayedText(text.slice(0, displayedText.length + 1));
+    }, 8); // ⚡ Perfectly chases the 40ms stream without lagging
 
-  useEffect(() => {
-    if (!text) { 
-      setDisplayedText(""); 
-      return; 
-    }
-    
-    // Catch up to the incoming socket stream letter-by-letter
-    if (displayedText.length < text.length) {
-      const timer = setTimeout(() => {
-        setDisplayedText(text.slice(0, displayedText.length + 1));
-      }, 8); // ⚡ 8ms ensures it perfectly chases the 40ms word stream without lagging
-
-      return () => clearTimeout(timer);
-    }
-  }, [text, displayedText]);
+    return () => clearTimeout(timer);
+  }
+}, [text, displayedText]);
 
   return (
     <>

@@ -17,7 +17,8 @@ export const ValidationState = Annotation.Root({
     retryCount: Annotation<number>(),
     valid: Annotation<boolean>(),
     reason: Annotation<string>(),
-    correctionInstruction: Annotation<string>()
+    correctionInstruction: Annotation<string>(),
+    generateFn: Annotation<(correction: string) => Promise<string>>()
 });
 
 type State = typeof ValidationState.State;
@@ -139,6 +140,32 @@ const shouldContinue = (state: State) => {
     // Otherwise, loop back to regenerate
     return "regenerate";
 };
+// 🟢 NEW NODE: Handles the actual AI regeneration during a retry loop
+async function regenerate(state: typeof ValidationState.State) {
+  if (!state.generateFn) {
+    console.warn("[Validation] generateFn missing. Skipping generation.");
+    return {
+      retryCount: state.retryCount + 1,
+      correctionInstruction: state.reason
+    };
+  }
+
+  try {
+    const newNarrative = await state.generateFn(state.reason);
+    return {
+      narrative: newNarrative,
+      correctionInstruction: state.reason,
+      retryCount: state.retryCount + 1
+    };
+  } catch (error) {
+    console.error("[Validation] Generation failed during retry. Failing open.", error);
+    return {
+      narrative: state.narrative,
+      correctionInstruction: state.reason,
+      retryCount: state.retryCount + 1
+    };
+  }
+}
 
 // Build and export the final executable graph
 export const NarrativeValidationGraph = new StateGraph(ValidationState)

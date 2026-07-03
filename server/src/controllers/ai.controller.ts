@@ -169,6 +169,7 @@ const NarrativeValidationGraph = new StateGraph(EvalState)
 // ============================================================
 export const generateNarrative = async (req: AuthenticatedRequest, res: Response) => {
   try {
+    console.log("👉 FRONTEND SENT TONE RAW STRING:", req.body?.tone);
     if (!req.file) return res.status(400).json({ error: "Please upload an image." });
     
     const uploadedFile = req.file;
@@ -194,16 +195,29 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
 
     if (rawTone.includes('romance') || rawTone.includes('romantic')) {
         toneKey = 'romantic';
-    } else if (rawTone.includes('science fiction') || rawTone.includes('sci-fi') || rawTone.includes('sci fi')) {
+    } else if (
+        rawTone.includes('science fiction') || 
+        rawTone.includes('science-fiction') || // 🟢 ADDED THIS LINE
+        rawTone.includes('sci-fi') || 
+        rawTone.includes('sci fi') ||
+        rawTone.includes('scifi')
+    ) {
         toneKey = 'sci-fi';
     } else if (rawTone.includes('horror')) {
         toneKey = 'horror';
-    } else if (rawTone.includes('documentary')) {
+    }else if (
+        rawTone.includes('documentary') || 
+        rawTone.includes('grounded') ||       
+        rawTone.includes('historical') ||     
+        rawTone.includes('factual')           
+    ) {
         toneKey = 'documentary';
     } else if (rawTone.includes('cinematic')) {
         toneKey = 'cinematic';
+    } else if (rawTone.includes('fantasy')) { 
+        toneKey = 'fantasy'; // 🟢 ADDED THIS LINE
     } else {
-        toneKey = 'cinematic'; // Default fallback matching your router keys
+        toneKey = 'cinematic'; // Default fallback
     }
     
     // Fall back to cinematic configuration safely if any unknown string trickles through
@@ -468,7 +482,14 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
               reason: "",
               //selfCorrected: retryCount > 0,
               //generateFn: null
-              correctionInstruction: ""
+              correctionInstruction: "",
+              generateFn: async (correctionFeedback: string) => {
+                console.log(`[LangGraph] Attempting correction with feedback: ${correctionFeedback}`);
+    
+                 // Replace this with your actual Gemini/Groq API call later!
+                  // For now, we just return a dummy string to prove the loop works without breaking anything.
+                return `This is a newly generated corrected narrative based on: ${correctionFeedback}`;
+              }
           });
 
           if (graphState.valid) {
