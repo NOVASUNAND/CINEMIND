@@ -171,13 +171,7 @@ async function regenerate(state: typeof ValidationState.State) {
 export const NarrativeValidationGraph = new StateGraph(ValidationState)
     .addNode("grounding", evaluateGrounding)
     .addNode("genre", evaluateGenre)
-    .addNode("regenerate", async (state: State) => {
-        // Prepares state data for the next loop attempt
-        return { 
-            correctionInstruction: state.reason,
-            retryCount: state.retryCount + 1 
-        };
-    })
+    .addNode("regenerate", regenerate)
     .addEdge("__start__", "grounding")
     .addEdge("grounding", "genre")
     .addConditionalEdges("genre", shouldContinue, {
