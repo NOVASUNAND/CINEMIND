@@ -503,20 +503,25 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
           // Invoke the compiled LangGraph machine
           const graphState: any = await ExternalValidationGraph.invoke({
               toneKey: toneKey,
-              rules: "Strict factual and genre constraints", // Safely hardcoded to avoid undefined errors
+              rules: routerConfig?.rules || "Strict factual and genre constraints", 
               narrative: finalNarrative,
               retryCount: retryCount,
               valid: false,
               reason: "",
-              //selfCorrected: retryCount > 0,
-              //generateFn: null
               correctionInstruction: "",
               generateFn: async (correctionFeedback: string) => {
-                console.log(`[LangGraph] Attempting correction with feedback: ${correctionFeedback}`);
-    
-                 // Replace this with your actual Gemini/Groq API call later!
-                  // For now, we just return a dummy string to prove the loop works without breaking anything.
-                return `This is a newly generated corrected narrative based on: ${correctionFeedback}`;
+                console.log(`🔄 [LangGraph]: Triggering real generation with feedback: "${correctionFeedback}"`);
+                
+                // 1. Call your actual multi-tier function (Gemini -> Groq -> Edge)
+                const retryRun = await runStage2Generation(correctionFeedback);
+                
+                // 2. Update your MongoDB tracking variables with the retry data
+                inferenceExecutionMode = retryRun.stage2Mode;
+                generationLatencyMs = retryRun.realLatency;
+                executionModeHistory.push(retryRun.stage2Mode);
+                
+                // 3. Hand the real string back to LangGraph
+                return retryRun.stage2Narrative;
               }
           });
 
