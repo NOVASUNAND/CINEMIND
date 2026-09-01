@@ -351,9 +351,9 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
       io.emit("context-ready", { normalCaption, advancedCaption: advancedContext });
       io.emit("pipeline-status", { message: `Transmuting data to ${toneKey.toUpperCase()} via Semantic Router (Stage 2/2)...` });
       
-      if (!res.headersSent) {
-          res.status(200).json({ success: true, executionMode: inferenceExecutionMode });
-      }
+      // if (!res.headersSent) {
+      //     res.status(200).json({ success: true, executionMode: inferenceExecutionMode });
+      // }
 
       // ============================================================
       // STAGE 2 — GENERATOR HELPER (With strict state resets + prompt logging)
@@ -427,7 +427,7 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
               
               const groqStream = await groq.chat.completions.create({
                   messages: [{ role: "user", content: STAGE_2_PROMPT }], // Reusing identical verified string
-                  model: "llama-3.3-70b-versatile",
+                  model: "openai/gpt-oss-20b",
                   temperature: 0.6,
                   stream: true
               });
@@ -587,6 +587,10 @@ export const generateNarrative = async (req: AuthenticatedRequest, res: Response
       executionMode: inferenceExecutionMode,
       executionModeHistory,
     });
+
+     if (!res.headersSent) {
+          res.status(200).json({ success: true, executionMode: inferenceExecutionMode });
+     }
 
   } catch (error: any) {
     console.error("❌ Global Controller Exception:", error.message);
